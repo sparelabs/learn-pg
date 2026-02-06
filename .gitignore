@@ -6,6 +6,8 @@ dist
 
 # SQLite databases
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 
@@ -15,6 +17,7 @@ docker/data
 # Build outputs
 packages/*/dist
 packages/*/build
+*.tsbuildinfo
 
 # IDE
 .vscode

@@ -1,0 +1,27 @@
+node_modules
+dist
+.env
+*.log
+.DS_Store
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker volumes
+docker/data
+
+# Build outputs
+packages/*/dist
+packages/*/build
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Temporary files
+.tmp
+.cache

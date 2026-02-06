@@ -1,0 +1,8 @@
+{
+  "title": "Operational Health Monitoring",
+  "description": "Monitor and maintain PostgreSQL in production",
+  "level": 4,
+  "estimatedWeeks": 2,
+  "prerequisites": ["03-query-planner-internals", "05-postgresql-statistics"],
+  "order": 7
+}

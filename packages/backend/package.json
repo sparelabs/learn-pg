@@ -1,0 +1,29 @@
+{
+  "name": "@learn-pg/backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@learn-pg/shared": "*",
+    "fastify": "^4.25.2",
+    "@fastify/cors": "^8.5.0",
+    "pg": "^8.11.3",
+    "better-sqlite3": "^9.2.2",
+    "dockerode": "^4.0.2",
+    "marked": "^11.1.1",
+    "gray-matter": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/dockerode": "^3.3.24",
+    "@types/pg": "^8.10.9",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

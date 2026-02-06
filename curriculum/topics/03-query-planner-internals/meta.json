@@ -1,0 +1,8 @@
+{
+  "title": "Query Planner Internals",
+  "description": "Understand how PostgreSQL plans and optimizes queries",
+  "level": 3,
+  "estimatedWeeks": 2,
+  "prerequisites": ["01-basics", "02-advanced-queries"],
+  "order": 3
+}

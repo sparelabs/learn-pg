@@ -1,0 +1,310 @@
+[
+  {
+    "id": "mc-basics-1",
+    "type": "multiple-choice",
+    "difficulty": 1,
+    "topic": "basics",
+    "concepts": ["fundamentals"],
+    "prompt": "What does ACID stand for in database systems?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "Atomicity, Consistency, Isolation, Durability" },
+      { "id": "b", "text": "Accuracy, Completeness, Integrity, Dependability" },
+      { "id": "c", "text": "Automatic, Consistent, Incremental, Distributed" },
+      { "id": "d", "text": "Advanced, Concurrent, Indexed, Durable" }
+    ],
+    "correctOptionId": "a",
+    "explanation": "ACID stands for Atomicity, Consistency, Isolation, and Durability - the four key properties that guarantee database transactions are processed reliably."
+  },
+  {
+    "id": "mc-basics-2",
+    "type": "multiple-choice",
+    "difficulty": 2,
+    "topic": "basics",
+    "concepts": ["data-types"],
+    "prompt": "Which PostgreSQL data type should you use for storing large text content with no size limit?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "VARCHAR" },
+      { "id": "b", "text": "CHAR" },
+      { "id": "c", "text": "TEXT" },
+      { "id": "d", "text": "STRING" }
+    ],
+    "correctOptionId": "c",
+    "explanation": "TEXT is the best choice for large text content in PostgreSQL. While VARCHAR can technically store long strings, TEXT is specifically designed for variable-length text without a specified limit."
+  },
+  {
+    "id": "mc-query-1",
+    "type": "multiple-choice",
+    "difficulty": 3,
+    "topic": "queries",
+    "concepts": ["select", "filtering"],
+    "prompt": "What is the correct order of clauses in a SELECT statement?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "SELECT, WHERE, FROM, ORDER BY" },
+      { "id": "b", "text": "SELECT, FROM, WHERE, ORDER BY" },
+      { "id": "c", "text": "FROM, SELECT, WHERE, ORDER BY" },
+      { "id": "d", "text": "SELECT, ORDER BY, WHERE, FROM" }
+    ],
+    "correctOptionId": "b",
+    "explanation": "The correct order is SELECT, FROM, WHERE, ORDER BY. This is the logical flow: specify what you want (SELECT), from where (FROM), with what conditions (WHERE), and how to sort it (ORDER BY)."
+  },
+  {
+    "id": "mc-indexes-1",
+    "type": "multiple-choice",
+    "difficulty": 5,
+    "topic": "indexes",
+    "concepts": ["indexes", "performance"],
+    "prompt": "Which type of PostgreSQL index is most efficient for equality comparisons (WHERE column = value)?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "B-tree" },
+      { "id": "b", "text": "Hash" },
+      { "id": "c", "text": "GiST" },
+      { "id": "d", "text": "GIN" }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Hash indexes are most efficient for simple equality comparisons. However, B-tree indexes are more commonly used because they support a wider range of operations (equality, range queries, sorting) and are crash-safe, while hash indexes have historically had limitations."
+  },
+  {
+    "id": "mc-explain-1",
+    "type": "multiple-choice",
+    "difficulty": 6,
+    "topic": "query-planner",
+    "concepts": ["explain", "query-planning"],
+    "prompt": "What does a Seq Scan (Sequential Scan) in an EXPLAIN plan indicate?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "The query is using an index efficiently" },
+      { "id": "b", "text": "The query is reading every row in the table" },
+      { "id": "c", "text": "The query is using parallel workers" },
+      { "id": "d", "text": "The query has a syntax error" }
+    ],
+    "correctOptionId": "b",
+    "explanation": "A Sequential Scan means PostgreSQL is reading every row in the table from beginning to end. This can be slow for large tables, and often indicates that an index might help, though for small tables or queries that need most rows, a sequential scan may actually be the fastest option."
+  },
+  {
+    "id": "mc-joins-1",
+    "type": "multiple-choice",
+    "difficulty": 4,
+    "topic": "queries",
+    "concepts": ["joins"],
+    "prompt": "Which JOIN type returns all rows from the left table even if there's no match in the right table?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "INNER JOIN" },
+      { "id": "b", "text": "LEFT JOIN" },
+      { "id": "c", "text": "RIGHT JOIN" },
+      { "id": "d", "text": "FULL OUTER JOIN" }
+    ],
+    "correctOptionId": "b",
+    "explanation": "LEFT JOIN returns all rows from the left table and matching rows from the right table. When there's no match, NULL values appear for right table columns."
+  },
+  {
+    "id": "mc-transactions-1",
+    "type": "multiple-choice",
+    "difficulty": 4,
+    "topic": "transactions",
+    "concepts": ["transactions", "isolation"],
+    "prompt": "What command is used to permanently save changes made in a transaction?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "SAVE" },
+      { "id": "b", "text": "COMMIT" },
+      { "id": "c", "text": "APPLY" },
+      { "id": "d", "text": "PERSIST" }
+    ],
+    "correctOptionId": "b",
+    "explanation": "COMMIT permanently saves all changes made during the current transaction to the database. ROLLBACK would discard the changes instead."
+  },
+  {
+    "id": "mc-optimization-1",
+    "type": "multiple-choice",
+    "difficulty": 7,
+    "topic": "optimization",
+    "concepts": ["query-planning", "optimization"],
+    "prompt": "When might PostgreSQL choose NOT to use an available index?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "When the query will return more than 5-10% of table rows" },
+      { "id": "b", "text": "When statistics are outdated" },
+      { "id": "c", "text": "When the table is small enough that sequential scan is faster" },
+      { "id": "d", "text": "All of the above" }
+    ],
+    "correctOptionId": "d",
+    "explanation": "PostgreSQL's query planner is cost-based and will choose the most efficient plan. It may skip indexes when: selecting many rows (sequential scan is faster), statistics suggest it's not beneficial, or the table is small enough that scanning is quicker than index lookup overhead."
+  },
+  {
+    "id": "mc-statistics-1",
+    "type": "multiple-choice",
+    "difficulty": 8,
+    "topic": "statistics",
+    "concepts": ["statistics", "query-planning"],
+    "prompt": "What does the ANALYZE command do in PostgreSQL?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "Executes a query and shows performance metrics" },
+      { "id": "b", "text": "Collects statistics about table contents for the query planner" },
+      { "id": "c", "text": "Validates data integrity constraints" },
+      { "id": "d", "text": "Rebuilds all indexes on a table" }
+    ],
+    "correctOptionId": "b",
+    "explanation": "ANALYZE collects statistics about the contents of tables (like data distribution, common values, etc.) that the query planner uses to make better decisions about execution plans. This is different from EXPLAIN ANALYZE which runs a query and shows its performance."
+  },
+  {
+    "id": "mc-mvcc-1",
+    "type": "multiple-choice",
+    "difficulty": 9,
+    "topic": "internals",
+    "concepts": ["mvcc", "transactions"],
+    "prompt": "How does PostgreSQL's MVCC (Multi-Version Concurrency Control) handle concurrent updates?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "Uses row-level locks to prevent concurrent access" },
+      { "id": "b", "text": "Creates new versions of rows so readers don't block writers" },
+      { "id": "c", "text": "Queues all transactions to run sequentially" },
+      { "id": "d", "text": "Uses a global transaction log for conflict resolution" }
+    ],
+    "correctOptionId": "b",
+    "explanation": "MVCC creates new row versions rather than overwriting data, allowing readers and writers to work concurrently without blocking each other. Each transaction sees a consistent snapshot based on transaction IDs."
+  },
+  {
+    "id": "mc-vacuum-1",
+    "type": "multiple-choice",
+    "difficulty": 10,
+    "topic": "maintenance",
+    "concepts": ["vacuum", "maintenance"],
+    "prompt": "Why is VACUUM important in PostgreSQL, and what does VACUUM FULL do differently?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "VACUUM removes deleted rows; VACUUM FULL compacts the table and returns disk space" },
+      { "id": "b", "text": "VACUUM rebuilds indexes; VACUUM FULL rebuilds them with better organization" },
+      { "id": "c", "text": "VACUUM updates statistics; VACUUM FULL recalculates them from scratch" },
+      { "id": "d", "text": "VACUUM clears query cache; VACUUM FULL restarts all connections" }
+    ],
+    "correctOptionId": "a",
+    "explanation": "VACUUM marks dead tuples (from MVCC) as reusable space but doesn't return it to the OS. VACUUM FULL rewrites the entire table to compact it and return disk space, but requires an exclusive lock and can be slow on large tables."
+  },
+  {
+    "id": "mc-indexes-2",
+    "type": "multiple-choice",
+    "difficulty": 5,
+    "topic": "indexes",
+    "concepts": ["indexes", "gin"],
+    "prompt": "Which index type is best for full-text search in PostgreSQL?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "B-tree" },
+      { "id": "b", "text": "Hash" },
+      { "id": "c", "text": "GIN (Generalized Inverted Index)" },
+      { "id": "d", "text": "BRIN (Block Range Index)" }
+    ],
+    "correctOptionId": "c",
+    "explanation": "GIN indexes are ideal for full-text search and indexing composite values like arrays and JSONB. They create an inverted index structure that efficiently handles searches for elements within composite types."
+  },
+  {
+    "id": "mc-performance-1",
+    "type": "multiple-choice",
+    "difficulty": 7,
+    "topic": "performance",
+    "concepts": ["performance", "monitoring"],
+    "prompt": "Which pg_stat view shows query performance statistics including execution counts and times?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "pg_stat_activity" },
+      { "id": "b", "text": "pg_stat_statements" },
+      { "id": "c", "text": "pg_stat_user_tables" },
+      { "id": "d", "text": "pg_stat_database" }
+    ],
+    "correctOptionId": "b",
+    "explanation": "pg_stat_statements tracks execution statistics for all SQL statements including total time, calls, and rows processed. It's essential for identifying slow queries and performance bottlenecks."
+  },
+  {
+    "id": "mc-datatype-1",
+    "type": "multiple-choice",
+    "difficulty": 3,
+    "topic": "basics",
+    "concepts": ["data-types", "performance"],
+    "prompt": "What's the difference between INTEGER and BIGINT in PostgreSQL?",
+    "setupSql": null,
+    "metadata": {
+      "timesAsked": 0,
+      "timesCorrect": 0,
+      "averageTimeSeconds": 0
+    },
+    "options": [
+      { "id": "a", "text": "INTEGER stores 4 bytes (-2B to +2B), BIGINT stores 8 bytes (-9 quintillion to +9 quintillion)" },
+      { "id": "b", "text": "INTEGER is faster but less precise, BIGINT is slower but more precise" },
+      { "id": "c", "text": "INTEGER is for whole numbers, BIGINT is for decimals" },
+      { "id": "d", "text": "They're the same, BIGINT is just an alias" }
+    ],
+    "correctOptionId": "a",
+    "explanation": "INTEGER (INT) uses 4 bytes and ranges from -2,147,483,648 to 2,147,483,647. BIGINT uses 8 bytes for much larger ranges. Choose INTEGER when possible for better storage and performance."
+  }
+]

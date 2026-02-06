@@ -1,0 +1,8 @@
+{
+  "title": "Caching and Prepared Statements",
+  "description": "Understand PostgreSQL's caching mechanisms and how to use prepared statements for performance and security",
+  "level": 2,
+  "estimatedWeeks": 1,
+  "prerequisites": ["01-basics"],
+  "order": 2
+}

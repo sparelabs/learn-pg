@@ -1,0 +1,8 @@
+{
+  "title": "PostgreSQL Basics",
+  "description": "Learn the fundamentals of PostgreSQL including data types, basic queries, and table operations",
+  "level": 1,
+  "estimatedWeeks": 1,
+  "prerequisites": [],
+  "order": 1
+}

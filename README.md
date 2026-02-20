@@ -95,13 +95,21 @@ learn-pg/
 
 ## Curriculum Structure
 
-The curriculum is organized into 5 levels:
+The curriculum covers 6 topics across 4 difficulty levels:
 
-1. **Level 1**: Foundational Topics (basics, data types, simple queries)
-2. **Level 2**: Advanced Query Topics (CTEs, window functions, subqueries)
-3. **Level 3**: Query Planner & Optimization (EXPLAIN, statistics, optimization)
-4. **Level 4**: Operational Health & Performance (monitoring, indexes, tuning)
-5. **Level 5**: Advanced Topics (partitioning, replication, extensions)
+**Level 1 - Foundations:**
+- **PostgreSQL Basics** - Data types, basic queries, and table operations
+
+**Level 2 - Intermediate:**
+- **Caching and Prepared Statements** - PostgreSQL's caching mechanisms and prepared statement usage
+- **Advanced SQL Queries** - Window functions, CTEs, subqueries, and complex data analysis
+
+**Level 3 - Advanced:**
+- **Query Planner Internals** - How PostgreSQL plans and optimizes queries
+- **PostgreSQL Statistics** - How statistics are collected and used for query planning
+
+**Level 4 - Expert:**
+- **Operational Health Monitoring** - Monitoring and maintaining PostgreSQL in production
 
 ## Creating Custom Content
 

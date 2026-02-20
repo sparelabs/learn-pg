@@ -3,6 +3,6 @@
   "description": "Learn how PostgreSQL collects and uses statistics for query planning",
   "level": 3,
   "estimatedWeeks": 1,
-  "prerequisites": ["03-query-planner-internals"],
+  "prerequisites": ["query-planner-internals"],
   "order": 5
 }

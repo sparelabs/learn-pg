@@ -2,8 +2,8 @@ import type { Exercise } from '@learn-pg/shared';
 
 const exercises: Exercise[] = [
   {
-    id: '02-caching-01-01',
-    lessonId: '02-caching-and-prepared-statements-01',
+    id: 'caching-01-01',
+    lessonId: 'caching-and-prepared-statements-01',
     type: 'sql-query',
     title: 'Check Shared Buffers Configuration',
     prompt: 'Write a query to display the current shared_buffers setting.',
@@ -26,8 +26,8 @@ const exercises: Exercise[] = [
     difficulty: 1
   },
   {
-    id: '02-caching-01-02',
-    lessonId: '02-caching-and-prepared-statements-01',
+    id: 'caching-01-02',
+    lessonId: 'caching-and-prepared-statements-01',
     type: 'sql-query',
     title: 'Check effective_cache_size',
     prompt: 'Write a query to display the effective_cache_size parameter, which tells the planner how much memory is available for caching.',
@@ -50,8 +50,8 @@ const exercises: Exercise[] = [
     difficulty: 1
   },
   {
-    id: '02-caching-01-03',
-    lessonId: '02-caching-and-prepared-statements-01',
+    id: 'caching-01-03',
+    lessonId: 'caching-and-prepared-statements-01',
     type: 'sql-query',
     title: 'Check Multiple Memory Settings',
     prompt: 'Write a query to show shared_buffers, effective_cache_size, and work_mem in a single result set.',
@@ -76,8 +76,8 @@ const exercises: Exercise[] = [
     difficulty: 2
   },
   {
-    id: '02-caching-01-04',
-    lessonId: '02-caching-and-prepared-statements-01',
+    id: 'caching-01-04',
+    lessonId: 'caching-and-prepared-statements-01',
     type: 'sql-query',
     title: 'View Cost Parameters',
     prompt: 'Write a query to display the four main cost parameters: seq_page_cost, random_page_cost, cpu_tuple_cost, and cpu_operator_cost.',
@@ -102,8 +102,8 @@ const exercises: Exercise[] = [
     difficulty: 2
   },
   {
-    id: '02-caching-01-05',
-    lessonId: '02-caching-and-prepared-statements-01',
+    id: 'caching-01-05',
+    lessonId: 'caching-and-prepared-statements-01',
     type: 'sql-query',
     title: 'Identify SSD vs HDD Configuration',
     prompt: 'Write a query that shows the random_page_cost setting and indicates whether it appears to be configured for SSD (<= 2.0) or HDD (> 2.0). Use a CASE expression to add a column called storage_type.',

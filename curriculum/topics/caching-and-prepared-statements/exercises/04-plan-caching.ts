@@ -2,8 +2,8 @@ import type { Exercise } from '@learn-pg/shared';
 
 const exercises: Exercise[] = [
   {
-    id: '02-caching-04-01',
-    lessonId: '02-caching-and-prepared-statements-04',
+    id: 'caching-04-01',
+    lessonId: 'caching-and-prepared-statements-04',
     type: 'sql-query',
     title: 'Check plan_cache_mode Setting',
     prompt: 'Write a query to display the current plan_cache_mode setting.',
@@ -26,8 +26,8 @@ const exercises: Exercise[] = [
     difficulty: 1
   },
   {
-    id: '02-caching-04-02',
-    lessonId: '02-caching-and-prepared-statements-04',
+    id: 'caching-04-02',
+    lessonId: 'caching-and-prepared-statements-04',
     type: 'sql-query',
     title: 'Monitor Plan Usage',
     prompt: 'Create a prepared statement "get_order" that selects all columns from an orders table where user_id = $1. Then write a query to check pg_prepared_statements showing the name, generic_plans, and custom_plans columns.',
@@ -57,8 +57,8 @@ const exercises: Exercise[] = [
     difficulty: 2
   },
   {
-    id: '02-caching-04-03',
-    lessonId: '02-caching-and-prepared-statements-04',
+    id: 'caching-04-03',
+    lessonId: 'caching-and-prepared-statements-04',
     type: 'sql-query',
     title: 'Force Generic Plan Mode',
     prompt: 'Set plan_cache_mode to force_generic_plan for the current session, then verify the setting changed.',
@@ -81,8 +81,8 @@ const exercises: Exercise[] = [
     difficulty: 2
   },
   {
-    id: '02-caching-04-04',
-    lessonId: '02-caching-and-prepared-statements-04',
+    id: 'caching-04-04',
+    lessonId: 'caching-and-prepared-statements-04',
     type: 'sql-query',
     title: 'Analyze Planning Time',
     prompt: 'Use EXPLAIN (ANALYZE, TIMING ON) to show both planning time and execution time for a simple query. The query should be: SELECT COUNT(*) FROM orders WHERE user_id = 100.',
@@ -107,8 +107,8 @@ const exercises: Exercise[] = [
     difficulty: 3
   },
   {
-    id: '02-caching-04-05',
-    lessonId: '02-caching-and-prepared-statements-04',
+    id: 'caching-04-05',
+    lessonId: 'caching-and-prepared-statements-04',
     type: 'sql-query',
     title: 'Compare Custom vs Generic Plan Performance',
     prompt: 'First, set plan_cache_mode to force_custom_plan, prepare a statement "count_orders" that counts orders where user_id = $1, and execute it once. Then query pg_prepared_statements to see the custom_plans count.',
@@ -138,8 +138,8 @@ const exercises: Exercise[] = [
     difficulty: 4
   },
   {
-    id: '02-caching-04-06',
-    lessonId: '02-caching-and-prepared-statements-04',
+    id: 'caching-04-06',
+    lessonId: 'caching-and-prepared-statements-04',
     type: 'sql-query',
     title: 'Identify High-Planning Overhead Queries',
     prompt: 'Query pg_stat_statements to find queries where planning time is significant. Show the query, calls, mean_plan_time, mean_exec_time, and calculate plan_to_exec_ratio (mean_plan_time / mean_exec_time). Filter for queries called more than 100 times. Order by total planning time (mean_plan_time * calls) descending, limit to 5.',

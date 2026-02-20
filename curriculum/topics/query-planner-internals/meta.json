@@ -3,6 +3,6 @@
   "description": "Understand how PostgreSQL plans and optimizes queries",
   "level": 3,
   "estimatedWeeks": 2,
-  "prerequisites": ["01-basics", "02-advanced-queries"],
+  "prerequisites": ["basics", "advanced-sql-queries"],
   "order": 3
 }

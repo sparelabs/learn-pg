@@ -3,6 +3,6 @@
   "description": "Master window functions, CTEs, subqueries, and advanced SQL techniques for complex data analysis",
   "level": 2,
   "estimatedWeeks": 2,
-  "prerequisites": ["01-basics"],
+  "prerequisites": ["basics"],
   "order": 4
 }

@@ -2,8 +2,8 @@ import type { Exercise } from '@learn-pg/shared';
 
 const exercises: Exercise[] = [
   {
-    id: '02-caching-02-01',
-    lessonId: '02-caching-and-prepared-statements-02',
+    id: 'caching-02-01',
+    lessonId: 'caching-and-prepared-statements-02',
     type: 'sql-query',
     title: 'Calculate Database Cache Hit Ratio',
     prompt: 'Write a query to calculate the buffer cache hit ratio for the current database as a percentage. Include columns for cache_hits, disk_reads, and cache_hit_ratio_percent (rounded to 2 decimal places).',
@@ -29,8 +29,8 @@ const exercises: Exercise[] = [
     difficulty: 2
   },
   {
-    id: '02-caching-02-02',
-    lessonId: '02-caching-and-prepared-statements-02',
+    id: 'caching-02-02',
+    lessonId: 'caching-and-prepared-statements-02',
     type: 'sql-query',
     title: 'View Table-Level Cache Statistics',
     prompt: 'Write a query to show cache statistics for user tables. Include schemaname, relname (as table_name), heap_blks_read (as disk_reads), heap_blks_hit (as cache_hits), and the cache hit ratio as a percentage. Order by disk_reads descending and limit to 10 rows.',
@@ -63,8 +63,8 @@ const exercises: Exercise[] = [
     difficulty: 3
   },
   {
-    id: '02-caching-02-03',
-    lessonId: '02-caching-and-prepared-statements-02',
+    id: 'caching-02-03',
+    lessonId: 'caching-and-prepared-statements-02',
     type: 'sql-query',
     title: 'Identify Tables with Low Cache Hit Ratios',
     prompt: 'Write a query to find user tables with a cache hit ratio below 95% and more than 100 total block reads. Show table_name, cache_hit_ratio (as percentage), and total_reads (sum of cache hits and disk reads). Order by cache_hit_ratio ascending.',
@@ -94,8 +94,8 @@ const exercises: Exercise[] = [
     difficulty: 4
   },
   {
-    id: '02-caching-02-04',
-    lessonId: '02-caching-and-prepared-statements-02',
+    id: 'caching-02-04',
+    lessonId: 'caching-and-prepared-statements-02',
     type: 'sql-query',
     title: 'Analyze Index Cache Performance',
     prompt: 'Write a query to show index cache statistics. Include schemaname, relname (as index_name), idx_blks_read (as disk_reads), idx_blks_hit (as cache_hits), and cache hit ratio as a percentage. Only show indexes with at least one access (cache hits or disk reads > 0). Order by disk_reads descending, limit to 10.',
@@ -127,8 +127,8 @@ const exercises: Exercise[] = [
     difficulty: 3
   },
   {
-    id: '02-caching-02-05',
-    lessonId: '02-caching-and-prepared-statements-02',
+    id: 'caching-02-05',
+    lessonId: 'caching-and-prepared-statements-02',
     type: 'sql-query',
     title: 'Compare Table vs Index Caching',
     prompt: 'Write a query that shows separate cache hit ratios for tables vs indexes in the database. Show two rows: one for "tables" and one for "indexes" with columns: object_type, total_cache_hits, total_disk_reads, and cache_hit_ratio_percent.',

@@ -3,6 +3,6 @@
   "description": "Understand PostgreSQL's caching mechanisms and how to use prepared statements for performance and security",
   "level": 2,
   "estimatedWeeks": 1,
-  "prerequisites": ["01-basics"],
+  "prerequisites": ["basics"],
   "order": 2
 }

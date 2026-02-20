@@ -2,8 +2,8 @@ import type { Exercise } from '@learn-pg/shared';
 
 const exercises: Exercise[] = [
   {
-    id: '02-caching-03-01',
-    lessonId: '02-caching-and-prepared-statements-03',
+    id: 'caching-03-01',
+    lessonId: 'caching-and-prepared-statements-03',
     type: 'sql-query',
     title: 'Create a Simple Prepared Statement',
     prompt: 'Write a PREPARE statement named "get_product" that accepts an integer product ID and returns all columns from a products table where id matches the parameter.',
@@ -29,8 +29,8 @@ const exercises: Exercise[] = [
     difficulty: 2
   },
   {
-    id: '02-caching-03-02',
-    lessonId: '02-caching-and-prepared-statements-03',
+    id: 'caching-03-02',
+    lessonId: 'caching-and-prepared-statements-03',
     type: 'sql-query',
     title: 'Execute a Prepared Statement',
     prompt: 'After creating the prepared statement "get_product", execute it with product ID 2.',
@@ -63,8 +63,8 @@ const exercises: Exercise[] = [
     difficulty: 2
   },
   {
-    id: '02-caching-03-03',
-    lessonId: '02-caching-and-prepared-statements-03',
+    id: 'caching-03-03',
+    lessonId: 'caching-and-prepared-statements-03',
     type: 'sql-query',
     title: 'Prepared Statement with Multiple Parameters',
     prompt: 'Create a prepared statement named "find_products" that accepts a minimum price (numeric) and a name pattern (text), and returns products where price >= $1 AND name ILIKE $2. Then execute it with min_price = 25.00 and pattern = \'%get%\'.',
@@ -92,8 +92,8 @@ const exercises: Exercise[] = [
     difficulty: 3
   },
   {
-    id: '02-caching-03-04',
-    lessonId: '02-caching-and-prepared-statements-03',
+    id: 'caching-03-04',
+    lessonId: 'caching-and-prepared-statements-03',
     type: 'sql-query',
     title: 'View Prepared Statements',
     prompt: 'Write a query to display all currently prepared statements in the session. Show the name, statement, and parameter_types columns from pg_prepared_statements.',
@@ -122,8 +122,8 @@ const exercises: Exercise[] = [
     difficulty: 2
   },
   {
-    id: '02-caching-03-05',
-    lessonId: '02-caching-and-prepared-statements-03',
+    id: 'caching-03-05',
+    lessonId: 'caching-and-prepared-statements-03',
     type: 'sql-query',
     title: 'Prepared INSERT Statement',
     prompt: 'Create a prepared statement named "insert_product" that inserts a new product with name (text) and price (numeric) parameters, and returns the inserted id. Then execute it to insert a product named "New Widget" with price 15.99.',
@@ -151,8 +151,8 @@ const exercises: Exercise[] = [
     difficulty: 3
   },
   {
-    id: '02-caching-03-06',
-    lessonId: '02-caching-and-prepared-statements-03',
+    id: 'caching-03-06',
+    lessonId: 'caching-and-prepared-statements-03',
     type: 'sql-query',
     title: 'Deallocate Prepared Statement',
     prompt: 'Query pg_prepared_statements to verify there are prepared statements, then deallocate a specific prepared statement named "get_product", and query pg_prepared_statements again to confirm it\'s gone.',

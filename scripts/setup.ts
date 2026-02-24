@@ -58,7 +58,7 @@ console.log('✓ Data directory created\n');
 // Build Docker image
 console.log('🏗️  Building PostgreSQL Docker image...');
 try {
-  execSync('docker-compose -f docker/docker-compose.yml build', { stdio: 'inherit' });
+  execSync('docker compose -f docker/docker-compose.yml build', { stdio: 'inherit' });
   console.log('✓ Docker image built\n');
 } catch (error) {
   console.error('❌ Failed to build Docker image');
@@ -68,7 +68,7 @@ try {
 // Start PostgreSQL container
 console.log('🚀 Starting PostgreSQL container...');
 try {
-  execSync('docker-compose -f docker/docker-compose.yml up -d', { stdio: 'inherit' });
+  execSync('docker compose -f docker/docker-compose.yml up -d', { stdio: 'inherit' });
   console.log('✓ PostgreSQL container started\n');
 } catch (error) {
   console.error('❌ Failed to start PostgreSQL container');

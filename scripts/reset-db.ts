@@ -28,14 +28,14 @@ async function main() {
 
   console.log('\n🗑️  Stopping and removing PostgreSQL container...');
   try {
-    execSync('docker-compose -f docker/docker-compose.yml down -v', { stdio: 'inherit' });
+    execSync('docker compose -f docker/docker-compose.yml down -v', { stdio: 'inherit' });
   } catch (error) {
     console.error('Failed to stop container');
   }
 
   console.log('\n🚀 Starting fresh PostgreSQL container...');
   try {
-    execSync('docker-compose -f docker/docker-compose.yml up -d', { stdio: 'inherit' });
+    execSync('docker compose -f docker/docker-compose.yml up -d', { stdio: 'inherit' });
   } catch (error) {
     console.error('Failed to start container');
     rl.close();

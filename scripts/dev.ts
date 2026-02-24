@@ -17,7 +17,7 @@ async function main() {
     execSync('docker exec learn-pg-postgres pg_isready -U learnpg', { stdio: 'pipe' });
   } catch {
     console.log('⚠️  PostgreSQL container is not running. Starting it...');
-    execSync('docker-compose -f docker/docker-compose.yml up -d', { stdio: 'inherit' });
+    execSync('docker compose -f docker/docker-compose.yml up -d', { stdio: 'inherit' });
     console.log('✓ PostgreSQL started\n');
   }
 

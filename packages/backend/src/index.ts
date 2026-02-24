@@ -55,7 +55,7 @@ async function start() {
     } else {
       const containerRunning = await dockerService.isContainerRunning();
       if (!containerRunning) {
-        console.log('PostgreSQL container not running. Start it with: docker-compose up -d');
+        console.log('PostgreSQL container not running. Start it with: docker compose up -d');
       } else {
         console.log('PostgreSQL container is running');
       }

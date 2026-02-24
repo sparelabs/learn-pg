@@ -143,12 +143,22 @@ export default function LessonPage() {
                 {submitMutation.isPending ? 'Submitting...' : 'Submit Query'}
               </button>
             ) : (
-              <button
-                onClick={handleNextExercise}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded font-medium"
-              >
-                {currentExerciseIndex < exercises.length - 1 ? 'Next Exercise →' : 'Back to Exercise 1'}
-              </button>
+              <div className="flex gap-2">
+                {!result.isValid && (
+                  <button
+                    onClick={() => setResult(null)}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded font-medium"
+                  >
+                    Retry
+                  </button>
+                )}
+                <button
+                  onClick={handleNextExercise}
+                  className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded font-medium"
+                >
+                  {currentExerciseIndex < exercises.length - 1 ? 'Next Exercise →' : 'Back to Exercise 1'}
+                </button>
+              </div>
             )}
 
             {result && (

@@ -25,9 +25,7 @@ export class ExerciseService {
     const startTime = Date.now();
 
     try {
-      // Set search path first, then execute user query separately
-      await dockerService.executeQuery(`SET search_path TO ${schema}`);
-      const result = await dockerService.executeQuery(userQuery);
+      const result = await dockerService.executeQueryWithSchema(userQuery, schema);
       const executionTimeMs = Date.now() - startTime;
 
       // Validate based on exercise validation config
@@ -183,8 +181,7 @@ export class ExerciseService {
     let score = 100;
 
     try {
-      const fullQuery = `SET search_path TO ${schema}; ${userQuery}`;
-      const plan = await dockerService.executeExplain(fullQuery);
+      const plan = await dockerService.executeExplain(userQuery, schema);
 
       const planText = JSON.stringify(plan);
 

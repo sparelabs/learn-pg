@@ -85,10 +85,10 @@ export default function LessonPage() {
 
         {/* Right: Exercise Area */}
         {currentExercise && (
-          <div className="bg-white rounded-lg shadow p-8">
+          <div className="bg-white rounded-lg shadow p-8 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
             {/* Exercise Navigation Tabs */}
             {exercises.length > 1 && (
-              <div className="flex gap-2 mb-6 border-b border-gray-200 pb-4">
+              <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-4">
                 {exercises.map((ex, idx) => (
                   <button
                     key={ex.id}

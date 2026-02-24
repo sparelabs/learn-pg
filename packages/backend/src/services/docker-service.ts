@@ -90,8 +90,25 @@ export class DockerService {
     }
   }
 
-  async executeExplain(query: string, params?: any[]): Promise<any> {
+  async executeQueryWithSchema(query: string, schema: string, params?: any[], timeoutMs: number = 5000): Promise<any> {
+    const client = new Client(this.config);
+    try {
+      await client.connect();
+      await client.query(`SET statement_timeout = ${timeoutMs}`);
+      await client.query(`SET search_path TO ${schema}`);
+      const result = await client.query(query, params);
+      return result;
+    } finally {
+      await client.end();
+    }
+  }
+
+  async executeExplain(query: string, schema?: string, params?: any[]): Promise<any> {
     const explainQuery = `EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT JSON) ${query}`;
+    if (schema) {
+      const result = await this.executeQueryWithSchema(explainQuery, schema, params);
+      return result.rows[0]['QUERY PLAN'];
+    }
     const result = await this.executeQuery(explainQuery, params);
     return result.rows[0]['QUERY PLAN'];
   }

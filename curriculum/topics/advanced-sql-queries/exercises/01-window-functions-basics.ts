@@ -197,7 +197,7 @@ export const exercises: Exercise[] = [
           required: ['name', 'department', 'salary'],
           exactMatch: false
         },
-        rowCount: { exact: 6 }
+        rowCount: { exact: 4 }
       }
     },
     order: 5,

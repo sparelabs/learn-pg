@@ -6,6 +6,12 @@ import { api } from '../api/client';
 import SQLEditor from '../components/exercises/SQLEditor';
 import type { Exercise } from '@learn-pg/shared';
 
+function dedent(text: string): string {
+  const lines = text.split('\n').filter(l => l.trim());
+  const min = lines.reduce((m, l) => Math.min(m, (l.match(/^(\s*)/)?.[1].length ?? 0)), Infinity);
+  return text.split('\n').map(l => l.slice(min)).join('\n').trim();
+}
+
 export default function LessonPage() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -55,11 +61,13 @@ export default function LessonPage() {
       setCurrentExerciseIndex(currentExerciseIndex + 1);
       setResult(null);
       setQuery('');
+      setupMutation.reset();
     } else {
       // Loop back to first exercise
       setCurrentExerciseIndex(0);
       setResult(null);
       setQuery('');
+      setupMutation.reset();
     }
   };
 
@@ -96,6 +104,7 @@ export default function LessonPage() {
                       setCurrentExerciseIndex(idx);
                       setResult(null);
                       setQuery('');
+                      setupMutation.reset();
                     }}
                     className={`px-4 py-2 rounded-t ${
                       idx === currentExerciseIndex
@@ -124,6 +133,12 @@ export default function LessonPage() {
                 <p className="text-xs text-gray-500 mt-1">
                   This creates the tables and data you'll need for this exercise
                 </p>
+                <details className="mt-3">
+                  <summary className="text-sm text-primary-600 cursor-pointer hover:text-primary-800 font-medium">
+                    Show database schema
+                  </summary>
+                  <pre className="mt-2 bg-gray-50 border border-gray-200 rounded p-3 text-xs overflow-x-auto whitespace-pre-wrap text-gray-700">{dedent(currentExercise.setupSql!)}</pre>
+                </details>
               </div>
             )}
 

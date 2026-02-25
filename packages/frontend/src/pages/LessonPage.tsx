@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { marked } from 'marked';
 import { api } from '../api/client';
@@ -14,6 +14,7 @@ function dedent(text: string): string {
 
 export default function LessonPage() {
   const { lessonId } = useParams<{ lessonId: string }>();
+  const navigate = useNavigate();
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<any>(null);
@@ -26,6 +27,21 @@ export default function LessonPage() {
   const { data: exercisesData } = useQuery({
     queryKey: ['exercises', lessonId],
     queryFn: () => api.getExercises(lessonId!)
+  });
+
+  // Reset state when navigating to a different lesson
+  useEffect(() => {
+    setCurrentExerciseIndex(0);
+    setQuery('');
+    setResult(null);
+    setupMutation.reset();
+  }, [lessonId]);
+
+  const topicId = lessonData?.lesson?.topicId;
+  const { data: topicData } = useQuery({
+    queryKey: ['topic', topicId],
+    queryFn: () => api.getTopic(topicId!),
+    enabled: !!topicId
   });
 
   const setupMutation = useMutation({
@@ -57,19 +73,19 @@ export default function LessonPage() {
   };
 
   const handleNextExercise = () => {
-    if (currentExerciseIndex < exercises.length - 1) {
-      setCurrentExerciseIndex(currentExerciseIndex + 1);
-      setResult(null);
-      setQuery('');
-      setupMutation.reset();
-    } else {
-      // Loop back to first exercise
-      setCurrentExerciseIndex(0);
-      setResult(null);
-      setQuery('');
-      setupMutation.reset();
-    }
+    setCurrentExerciseIndex(currentExerciseIndex + 1);
+    setResult(null);
+    setQuery('');
+    setupMutation.reset();
   };
+
+  // Find next lesson in the topic
+  const topicLessons = topicData?.topic?.lessons || [];
+  const currentLessonIndex = topicLessons.findIndex((l: any) => l.id === lessonId);
+  const nextLesson = currentLessonIndex >= 0 && currentLessonIndex < topicLessons.length - 1
+    ? topicLessons[currentLessonIndex + 1]
+    : null;
+  const isLastExercise = currentExerciseIndex >= exercises.length - 1;
 
   if (!lesson) {
     return <div className="max-w-7xl mx-auto px-4 py-8">Loading...</div>;
@@ -167,12 +183,28 @@ export default function LessonPage() {
                     Retry
                   </button>
                 )}
-                <button
-                  onClick={handleNextExercise}
-                  className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded font-medium"
-                >
-                  {currentExerciseIndex < exercises.length - 1 ? 'Next Exercise →' : 'Back to Exercise 1'}
-                </button>
+                {!isLastExercise ? (
+                  <button
+                    onClick={handleNextExercise}
+                    className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded font-medium"
+                  >
+                    Next Exercise →
+                  </button>
+                ) : result.isValid && nextLesson ? (
+                  <button
+                    onClick={() => navigate(`/lessons/${nextLesson.id}`)}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded font-medium"
+                  >
+                    Next Lesson →
+                  </button>
+                ) : result.isValid ? (
+                  <button
+                    onClick={() => navigate('/topics')}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded font-medium"
+                  >
+                    Back to Topics (All Exercises Complete) ✓
+                  </button>
+                ) : null}
               </div>
             )}
 

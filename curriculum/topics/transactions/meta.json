@@ -1,0 +1,8 @@
+{
+  "title": "Transaction Isolation",
+  "description": "Understand how PostgreSQL handles concurrent transactions and isolation levels",
+  "level": 3,
+  "estimatedWeeks": 1,
+  "prerequisites": ["basics"],
+  "order": 10
+}

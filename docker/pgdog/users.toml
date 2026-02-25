@@ -1,0 +1,5 @@
+[[users]]
+name = "learnpg"
+database = "exercises"
+password = "learnpg_dev"
+pool_size = 10

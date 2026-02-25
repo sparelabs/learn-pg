@@ -26,11 +26,13 @@ async function start() {
   fastify.get('/health', async () => {
     const dockerRunning = await dockerService.isDockerRunning();
     const containerRunning = await dockerService.isContainerRunning();
+    const pgdogRunning = await dockerService.isPgdogRunning();
 
     return {
       status: 'ok',
       docker: dockerRunning,
       postgres: containerRunning,
+      pgdog: pgdogRunning,
       timestamp: new Date().toISOString()
     };
   });

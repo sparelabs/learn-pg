@@ -24,6 +24,18 @@ export const api = {
   getCompletedExerciseIds: () =>
     fetch(`${API_BASE}/exercises/completed`).then(r => r.json()),
 
+  // Multi-session exercises
+  startSession: (exerciseId: string) =>
+    fetch(`${API_BASE}/exercises/${exerciseId}/start-session`, { method: 'POST' }).then(r => r.json()),
+  executeOnSession: (exerciseId: string, sessionId: string, query: string, session: 'A' | 'B', stepIndex: number) =>
+    fetch(`${API_BASE}/exercises/${exerciseId}/session/${sessionId}/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, session, stepIndex })
+    }).then(r => r.json()),
+  closeSession: (exerciseId: string, sessionId: string) =>
+    fetch(`${API_BASE}/exercises/${exerciseId}/session/${sessionId}/close`, { method: 'POST' }).then(r => r.json()),
+
   // Progress
   getProgress: () => fetch(`${API_BASE}/progress`).then(r => r.json()),
   updateProgress: (updates: any) =>

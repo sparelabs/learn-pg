@@ -28,7 +28,8 @@ export type ExerciseType =
   | 'optimization'
   | 'debugging'
   | 'schema-design'
-  | 'performance';
+  | 'performance'
+  | 'multi-session';
 
 export interface Exercise {
   id: string;
@@ -42,6 +43,7 @@ export interface Exercise {
   validation: ValidationConfig;
   order: number;
   difficulty: number; // 1-10
+  requiresSuperuser?: boolean; // Uses learnpg_admin connection for internals access
 }
 
 export interface SQLQueryExercise extends Exercise {
@@ -96,4 +98,29 @@ export interface PerformanceExercise extends Exercise {
     baseline: Record<string, number>;
     target: Record<string, number>;
   };
+}
+
+export interface MultiSessionExercise extends Exercise {
+  type: 'multi-session';
+  sessions: {
+    /** Instructions displayed above Session A editor */
+    sessionAPrompt: string;
+    /** Instructions displayed above Session B editor */
+    sessionBPrompt: string;
+    /** Optional pre-populated SQL for Session A */
+    sessionAInitialQuery?: string;
+    /** Optional pre-populated SQL for Session B */
+    sessionBInitialQuery?: string;
+  };
+  /**
+   * Ordered steps the user must execute. Each step specifies which
+   * session to type in and an optional instruction.
+   * The UI highlights the active session and disables the other.
+   */
+  steps: Array<{
+    session: 'A' | 'B';
+    instruction: string;
+    /** If set, validate this step's result before allowing next step */
+    validation?: ValidationConfig;
+  }>;
 }

@@ -21,6 +21,22 @@ export class DockerService {
     database: 'exercises'
   };
 
+  private adminConfig: PostgresConfig = {
+    host: 'localhost',
+    port: 5433,
+    user: 'learnpg_admin',
+    password: 'learnpg_admin_dev',
+    database: 'exercises'
+  };
+
+  private pgdogConfig: PostgresConfig = {
+    host: 'localhost',
+    port: 6432,
+    user: 'learnpg',
+    password: 'learnpg_dev',
+    database: 'exercises'
+  };
+
   async isDockerRunning(): Promise<boolean> {
     try {
       await docker.ping();
@@ -103,6 +119,55 @@ export class DockerService {
     }
   }
 
+  async executeQueryAsAdmin(query: string, params?: any[], timeoutMs: number = 5000): Promise<any> {
+    const client = new Client(this.adminConfig);
+    try {
+      await client.connect();
+      await client.query(`SET statement_timeout = ${timeoutMs}`);
+      const result = await client.query(query, params);
+      return result;
+    } finally {
+      await client.end();
+    }
+  }
+
+  async executeQueryWithSchemaAsAdmin(query: string, schema: string, params?: any[], timeoutMs: number = 5000): Promise<any> {
+    const client = new Client(this.adminConfig);
+    try {
+      await client.connect();
+      await client.query(`SET statement_timeout = ${timeoutMs}`);
+      await client.query(`SET search_path TO ${schema}`);
+      const result = await client.query(query, params);
+      return result;
+    } finally {
+      await client.end();
+    }
+  }
+
+  async executeQueryViaPgdog(query: string, params?: any[], timeoutMs: number = 5000): Promise<any> {
+    const client = new Client(this.pgdogConfig);
+    try {
+      await client.connect();
+      await client.query(`SET statement_timeout = ${timeoutMs}`);
+      const result = await client.query(query, params);
+      return result;
+    } finally {
+      await client.end();
+    }
+  }
+
+  async isPgdogRunning(): Promise<boolean> {
+    try {
+      const client = new Client(this.pgdogConfig);
+      await client.connect();
+      await client.query('SELECT 1');
+      await client.end();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async executeExplain(query: string, schema?: string, params?: any[]): Promise<any> {
     const explainQuery = `EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT JSON) ${query}`;
     if (schema) {
@@ -113,25 +178,29 @@ export class DockerService {
     return result.rows[0]['QUERY PLAN'];
   }
 
-  async resetSchema(schema: string): Promise<void> {
-    const client = new Client(this.config);
+  async resetSchema(schema: string, useSuperuser: boolean = false): Promise<void> {
+    const client = new Client(useSuperuser ? this.adminConfig : this.config);
     try {
       await client.connect();
       await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
       await client.query(`CREATE SCHEMA ${schema}`);
       await client.query(`GRANT ALL ON SCHEMA ${schema} TO ${this.config.user}`);
+      if (useSuperuser) {
+        await client.query(`GRANT ALL ON SCHEMA ${schema} TO ${this.adminConfig.user}`);
+      }
     } finally {
       await client.end();
     }
   }
 
-  async setupExercise(setupSql: string, schema: string = 'public'): Promise<void> {
-    const client = new Client(this.config);
+  async setupExercise(setupSql: string, schema: string = 'public', useSuperuser: boolean = false): Promise<void> {
+    const clientConfig = useSuperuser ? this.adminConfig : this.config;
+    const client = new Client(clientConfig);
     try {
       await client.connect();
 
       // Reset schema to clean state
-      await this.resetSchema(schema);
+      await this.resetSchema(schema, useSuperuser);
 
       // Set search path
       await client.query(`SET search_path TO ${schema}`);
@@ -174,6 +243,10 @@ export class DockerService {
 
   getConfig(): PostgresConfig {
     return { ...this.config };
+  }
+
+  getAdminConfig(): PostgresConfig {
+    return { ...this.adminConfig };
   }
 }
 

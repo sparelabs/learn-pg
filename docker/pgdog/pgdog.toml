@@ -1,0 +1,23 @@
+[general]
+host = "0.0.0.0"
+port = 6432
+healthcheck_port = 6433
+workers = 2
+default_pool_size = 10
+min_pool_size = 2
+pooler_mode = "transaction"
+connect_timeout = 5000
+checkout_timeout = 5000
+idle_timeout = 60000
+client_idle_timeout = 300000
+client_idle_in_transaction_timeout = 30000
+query_timeout = 30000
+healthcheck_interval = 10000
+load_balancing_strategy = "random"
+prepared_statements = "extended"
+
+[[databases]]
+name = "exercises"
+host = "postgres"
+port = 5432
+role = "primary"

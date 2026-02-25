@@ -98,6 +98,28 @@ while (attempts < maxAttempts) {
   }
 }
 
+// Wait for PGDog to be ready
+console.log('⏳ Waiting for PGDog to be ready...');
+let pgdogAttempts = 0;
+while (pgdogAttempts < maxAttempts) {
+  try {
+    execSync(
+      'docker exec learn-pg-pgdog curl -sf http://localhost:6433/',
+      { stdio: 'pipe' }
+    );
+    console.log('✓ PGDog is ready\n');
+    break;
+  } catch {
+    pgdogAttempts++;
+    if (pgdogAttempts >= maxAttempts) {
+      console.error('❌ PGDog failed to start in time');
+      process.exit(1);
+    }
+    process.stdout.write('.');
+    execSync('sleep 1', { stdio: 'pipe' });
+  }
+}
+
 console.log('\n✅ Setup complete!\n');
 console.log('To start the application, run:');
 console.log('  npm start\n');

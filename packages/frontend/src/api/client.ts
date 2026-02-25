@@ -21,9 +21,6 @@ export const api = {
     fetch(`${API_BASE}/exercises/${id}/hints?count=${count}`).then(r => r.json()),
   getExerciseAttempts: (id: string) =>
     fetch(`${API_BASE}/exercises/${id}/attempts`).then(r => r.json()),
-  getCompletedExerciseIds: () =>
-    fetch(`${API_BASE}/exercises/completed`).then(r => r.json()),
-
   // Multi-session exercises
   startSession: (exerciseId: string) =>
     fetch(`${API_BASE}/exercises/${exerciseId}/start-session`, { method: 'POST' }).then(r => r.json()),

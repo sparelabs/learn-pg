@@ -201,6 +201,15 @@ export class ProgressService {
     }
   }
 
+  getCompletedExerciseIds(): string[] {
+    const db = getDatabase();
+    const rows = db.prepare(`
+      SELECT DISTINCT exercise_id FROM exercise_attempts
+      WHERE user_id = ? AND is_correct = 1
+    `).all(this.userId) as any[];
+    return rows.map(row => row.exercise_id);
+  }
+
   getExerciseAttempts(exerciseId: string): ExerciseAttempt[] {
     const db = getDatabase();
     const rows = db.prepare(`

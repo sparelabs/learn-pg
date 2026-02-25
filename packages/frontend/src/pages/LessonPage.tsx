@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { marked } from 'marked';
 import { api } from '../api/client';
 import SQLEditor from '../components/exercises/SQLEditor';
@@ -15,9 +15,11 @@ function dedent(text: string): string {
 export default function LessonPage() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<any>(null);
+  const restoredLessonRef = useRef<string | null>(null);
 
   const { data: lessonData } = useQuery({
     queryKey: ['lesson', lessonId],
@@ -29,8 +31,69 @@ export default function LessonPage() {
     queryFn: () => api.getExercises(lessonId!)
   });
 
-  // Reset state when navigating to a different lesson
+  const exercises: Exercise[] = exercisesData?.exercises || [];
+
+  // Fetch attempts for all exercises in this lesson
+  const attemptQueries = useQueries({
+    queries: exercises.map((ex) => ({
+      queryKey: ['attempts', ex.id],
+      queryFn: () => api.getExerciseAttempts(ex.id),
+      staleTime: 30_000,
+    })),
+  });
+
+  const attemptsReady = exercises.length > 0 && attemptQueries.every(q => q.isSuccess);
+
+  // Build a map of exerciseId → latest attempt { query, result }
+  const latestAttempts = useMemo(() => {
+    if (!attemptsReady) return {};
+    const map: Record<string, { query: string; result: any }> = {};
+    for (const q of attemptQueries) {
+      const attempts = q.data?.attempts;
+      if (attempts && attempts.length > 0) {
+        const latest = attempts[0]; // already sorted DESC by backend
+        let parsedResult = null;
+        try {
+          parsedResult = JSON.parse(latest.feedback);
+        } catch { /* ignore */ }
+        map[latest.exerciseId] = { query: latest.submittedQuery, result: parsedResult };
+      }
+    }
+    return map;
+  }, [attemptsReady, attemptQueries]);
+
+  // Restore state on initial load (once per lesson)
   useEffect(() => {
+    if (!attemptsReady || restoredLessonRef.current === lessonId) return;
+    restoredLessonRef.current = lessonId!;
+
+    // Find first unsolved exercise
+    let startIdx = 0;
+    for (let i = 0; i < exercises.length; i++) {
+      const attempt = latestAttempts[exercises[i].id];
+      if (attempt?.result?.isValid) {
+        startIdx = i + 1;
+      } else {
+        break;
+      }
+    }
+    // Clamp to last exercise if all solved
+    if (startIdx >= exercises.length) startIdx = exercises.length - 1;
+
+    setCurrentExerciseIndex(startIdx);
+    const saved = latestAttempts[exercises[startIdx].id];
+    if (saved) {
+      setQuery(saved.query);
+      setResult(saved.result);
+    } else {
+      setQuery('');
+      setResult(null);
+    }
+  }, [attemptsReady, lessonId, exercises, latestAttempts]);
+
+  // Reset restoration ref when navigating to a different lesson
+  useEffect(() => {
+    restoredLessonRef.current = null;
     setCurrentExerciseIndex(0);
     setQuery('');
     setResult(null);
@@ -51,13 +114,14 @@ export default function LessonPage() {
   const submitMutation = useMutation({
     mutationFn: ({ exerciseId, query }: { exerciseId: string; query: string }) =>
       api.submitExercise(exerciseId, query),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       setResult(data.result);
+      // Invalidate attempts cache so latestAttempts stays fresh
+      queryClient.invalidateQueries({ queryKey: ['attempts', variables.exerciseId] });
     }
   });
 
   const lesson = lessonData?.lesson;
-  const exercises: Exercise[] = exercisesData?.exercises || [];
   const currentExercise = exercises[currentExerciseIndex];
 
   const handleStartExercise = () => {
@@ -73,10 +137,17 @@ export default function LessonPage() {
   };
 
   const handleNextExercise = () => {
-    setCurrentExerciseIndex(currentExerciseIndex + 1);
-    setResult(null);
-    setQuery('');
+    const nextIdx = currentExerciseIndex + 1;
+    setCurrentExerciseIndex(nextIdx);
     setupMutation.reset();
+    const saved = latestAttempts[exercises[nextIdx]?.id];
+    if (saved) {
+      setQuery(saved.query);
+      setResult(saved.result);
+    } else {
+      setQuery('');
+      setResult(null);
+    }
   };
 
   // Find next lesson in the topic
@@ -118,9 +189,15 @@ export default function LessonPage() {
                     key={ex.id}
                     onClick={() => {
                       setCurrentExerciseIndex(idx);
-                      setResult(null);
-                      setQuery('');
                       setupMutation.reset();
+                      const saved = latestAttempts[ex.id];
+                      if (saved) {
+                        setQuery(saved.query);
+                        setResult(saved.result);
+                      } else {
+                        setQuery('');
+                        setResult(null);
+                      }
                     }}
                     className={`px-4 py-2 rounded-t ${
                       idx === currentExerciseIndex

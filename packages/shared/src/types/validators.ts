@@ -90,4 +90,9 @@ export interface ValidationResult {
   suggestions: string[];
   executionTimeMs?: number;
   queryPlan?: any;
+  queryResults?: {
+    rows: any[];
+    rowCount: number;
+    fields: any[];
+  };
 }

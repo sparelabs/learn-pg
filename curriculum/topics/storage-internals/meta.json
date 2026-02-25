@@ -1,0 +1,8 @@
+{
+  "title": "Storage Internals: How PostgreSQL Stores Data",
+  "description": "Understand pages, heap files, TOAST, CTIDs, and how physical storage affects query performance",
+  "level": 2,
+  "estimatedWeeks": 1,
+  "prerequisites": ["basics"],
+  "order": 7
+}

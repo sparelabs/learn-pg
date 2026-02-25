@@ -1,0 +1,8 @@
+{
+  "title": "Sorting and Hashing: Building Blocks of Query Execution",
+  "description": "Understand external sorting, hash operations, and work_mem tuning for better performance",
+  "level": 2,
+  "estimatedWeeks": 1,
+  "prerequisites": ["basics", "storage-internals"],
+  "order": 9
+}

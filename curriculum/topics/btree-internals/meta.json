@@ -1,0 +1,8 @@
+{
+  "title": "B+ Tree Internals: How Indexes Really Work",
+  "description": "Understand B+ tree structure, fanout, clustering, and make better indexing decisions",
+  "level": 2,
+  "estimatedWeeks": 1,
+  "prerequisites": ["basics", "storage-internals"],
+  "order": 8
+}

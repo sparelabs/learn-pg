@@ -56,7 +56,7 @@ SELECT
         100.0 * heap_blks_hit / NULLIF(heap_blks_hit + heap_blks_read, 0),
         2
     ) AS cache_hit_ratio,
-    pg_size_pretty(pg_relation_size(schemaname||'.'||relname)) AS table_size
+    pg_size_pretty(pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname))) AS table_size
 FROM pg_statio_user_tables
 WHERE heap_blks_hit + heap_blks_read > 100  -- Meaningful sample size
 ORDER BY heap_blks_read DESC
@@ -82,7 +82,7 @@ SELECT
         100.0 * idx_blks_hit / NULLIF(idx_blks_hit + idx_blks_read, 0),
         2
     ) AS cache_hit_ratio,
-    pg_size_pretty(pg_relation_size(schemaname||'.'||relname)) AS index_size
+    pg_size_pretty(pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname))) AS index_size
 FROM pg_statio_user_indexes
 WHERE idx_blks_hit + idx_blks_read > 0
 ORDER BY idx_blks_read DESC
@@ -321,7 +321,7 @@ SELECT
     indexrelname AS index_name,
     idx_scan AS index_scans,
     idx_tup_read AS tuples_read,
-    pg_size_pretty(pg_relation_size(schemaname||'.'||indexrelname)) AS index_size
+    pg_size_pretty(pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(indexrelname))) AS index_size
 FROM pg_stat_user_indexes
 WHERE indexrelname = 'my_index';
 ```

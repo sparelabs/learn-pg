@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "setup": "tsx scripts/setup.ts",
+    "setup": "npm install && tsx scripts/setup.ts",
     "dev": "tsx scripts/dev.ts",
     "reset-progress": "tsx scripts/reset-progress.ts",
     "reset-db": "tsx scripts/reset-db.ts",

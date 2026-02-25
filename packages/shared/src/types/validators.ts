@@ -96,3 +96,13 @@ export interface ValidationResult {
     fields: any[];
   };
 }
+
+export interface MultiSessionStepResult {
+  stepIndex: number;
+  session: 'A' | 'B';
+  validationResult: ValidationResult;
+  queryResults?: {
+    rows: any[];
+    rowCount: number;
+  };
+}

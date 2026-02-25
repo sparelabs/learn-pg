@@ -1,7 +1,9 @@
 import type { FastifyInstance } from 'fastify';
+import type { MultiSessionExercise } from '@learn-pg/shared';
 import { exerciseService } from '../../services/exercise-service.js';
 import { progressService } from '../../services/progress-service.js';
 import { curriculumService } from '../../services/curriculum-service.js';
+import { sessionManager } from '../../services/session-manager.js';
 
 export async function exercisesRoutes(fastify: FastifyInstance) {
   // Setup an exercise
@@ -131,5 +133,80 @@ export async function exercisesRoutes(fastify: FastifyInstance) {
     }
 
     return { explanation: exercise.explanation };
+  });
+
+  // --- Multi-session exercise routes ---
+
+  // Start a multi-session exercise — creates persistent connection pair
+  fastify.post('/exercises/:exerciseId/start-session', async (request, reply) => {
+    const { exerciseId } = request.params as { exerciseId: string };
+
+    try {
+      const exercise = curriculumService.getExercise(exerciseId);
+      if (!exercise || exercise.type !== 'multi-session') {
+        return reply.code(400).send({ error: 'Not a multi-session exercise' });
+      }
+
+      // Setup the exercise environment first
+      await exerciseService.setupExercise(exerciseId);
+
+      const schema = exerciseService.getSchemaForExercise(exerciseId);
+      const sessionId = await sessionManager.createSessionPair(
+        exerciseId, schema, exercise.requiresSuperuser ?? false
+      );
+
+      return { sessionId };
+    } catch (error: any) {
+      return reply.code(500).send({ error: error.message });
+    }
+  });
+
+  // Execute query on a specific session (A or B)
+  fastify.post('/exercises/:exerciseId/session/:sessionId/execute', async (request, reply) => {
+    const { exerciseId, sessionId } = request.params as { exerciseId: string; sessionId: string };
+    const { query, session, stepIndex } = request.body as {
+      query: string;
+      session: 'A' | 'B';
+      stepIndex: number;
+    };
+
+    if (!query || typeof query !== 'string') {
+      return reply.code(400).send({ error: 'Query is required' });
+    }
+
+    if (session !== 'A' && session !== 'B') {
+      return reply.code(400).send({ error: 'Session must be A or B' });
+    }
+
+    try {
+      const result = await sessionManager.executeOnSession(sessionId, session, query);
+
+      // Optionally validate if the step has validation config
+      const exercise = curriculumService.getExercise(exerciseId) as MultiSessionExercise | undefined;
+      let validationResult = null;
+      if (exercise?.steps?.[stepIndex]?.validation) {
+        const stepValidation = exercise.steps[stepIndex].validation!;
+        validationResult = await exerciseService.validateStepResult(stepValidation, result);
+      }
+
+      return {
+        queryResults: { rows: result.rows, rowCount: result.rowCount ?? result.rows?.length ?? 0 },
+        validationResult
+      };
+    } catch (error: any) {
+      return reply.code(500).send({ error: error.message });
+    }
+  });
+
+  // Close session pair when exercise is done
+  fastify.post('/exercises/:exerciseId/session/:sessionId/close', async (request, reply) => {
+    const { sessionId } = request.params as { sessionId: string };
+
+    try {
+      await sessionManager.closeSessionPair(sessionId);
+      return { success: true };
+    } catch (error: any) {
+      return reply.code(500).send({ error: error.message });
+    }
   });
 }

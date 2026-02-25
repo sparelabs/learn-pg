@@ -11,7 +11,7 @@ export class ExerciseService {
 
     if (exercise.setupSql) {
       const schema = this.getSchemaForExercise(exerciseId);
-      await dockerService.setupExercise(exercise.setupSql, schema);
+      await dockerService.setupExercise(exercise.setupSql, schema, exercise.requiresSuperuser ?? false);
     }
   }
 
@@ -25,7 +25,10 @@ export class ExerciseService {
     const startTime = Date.now();
 
     try {
-      const result = await dockerService.executeQueryWithSchema(userQuery, schema);
+      const executeMethod = exercise.requiresSuperuser
+        ? dockerService.executeQueryWithSchemaAsAdmin.bind(dockerService)
+        : dockerService.executeQueryWithSchema.bind(dockerService);
+      const result = await executeMethod(userQuery, schema);
       const executionTimeMs = Date.now() - startTime;
 
       // Validate based on exercise validation config
@@ -342,7 +345,22 @@ export class ExerciseService {
     }
   }
 
-  private getSchemaForExercise(exerciseId: string): string {
+  async validateStepResult(config: ValidationConfig, result: any): Promise<ValidationResult> {
+    const executionTimeMs = 0; // Step results don't track individual timing
+    const schema = 'public'; // Not used for result-match validation
+    const validationResult = await this.validate(config, '', result, executionTimeMs, schema);
+    return {
+      ...validationResult,
+      executionTimeMs,
+      queryResults: {
+        rows: result.rows || [],
+        rowCount: result.rowCount || result.rows?.length || 0,
+        fields: result.fields || []
+      }
+    };
+  }
+
+  getSchemaForExercise(exerciseId: string): string {
     // Extract topic from exercise ID (format: topicId-lessonId-exerciseId)
     const parts = exerciseId.split('-');
     return parts[0] || 'public';

@@ -4,7 +4,8 @@ import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/rea
 import { marked } from 'marked';
 import { api } from '../api/client';
 import SQLEditor from '../components/exercises/SQLEditor';
-import type { Exercise } from '@learn-pg/shared';
+import MultiSessionExerciseComponent from '../components/exercises/MultiSessionExercise';
+import type { Exercise, MultiSessionExercise } from '@learn-pg/shared';
 
 function dedent(text: string): string {
   const lines = text.split('\n').filter(l => l.trim());
@@ -163,11 +164,42 @@ export default function LessonPage() {
   }
 
   const contentHtml = marked(lesson.content) as string;
+  const isMultiSession = currentExercise?.type === 'multi-session';
+
+  // Exercise navigation tabs (shared between both layouts)
+  const exerciseTabs = exercises.length > 1 && (
+    <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-4">
+      {exercises.map((ex, idx) => (
+        <button
+          key={ex.id}
+          onClick={() => {
+            setCurrentExerciseIndex(idx);
+            setupMutation.reset();
+            const saved = latestAttempts[ex.id];
+            if (saved) {
+              setQuery(saved.query);
+              setResult(saved.result);
+            } else {
+              setQuery('');
+              setResult(null);
+            }
+          }}
+          className={`px-4 py-2 rounded-t ${
+            idx === currentExerciseIndex
+              ? 'bg-primary-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          Exercise {idx + 1}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left: Lesson Content */}
+      <div className={`grid grid-cols-1 ${isMultiSession ? '' : 'lg:grid-cols-2'} gap-8`}>
+        {/* Lesson Content */}
         <div className="bg-white rounded-lg shadow p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">{lesson.title}</h1>
           <p className="text-gray-600 mb-6">{lesson.description}</p>
@@ -178,38 +210,19 @@ export default function LessonPage() {
           />
         </div>
 
-        {/* Right: Exercise Area */}
-        {currentExercise && (
+        {/* Exercise Area */}
+        {currentExercise && isMultiSession ? (
+          <div className="bg-white rounded-lg shadow p-8">
+            {exerciseTabs}
+            <h3 className="text-xl font-bold mb-2">{currentExercise.title}</h3>
+            <p className="text-gray-600 mb-4">{currentExercise.prompt}</p>
+            <MultiSessionExerciseComponent
+              exercise={currentExercise as MultiSessionExercise}
+            />
+          </div>
+        ) : currentExercise ? (
           <div className="bg-white rounded-lg shadow p-8 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
-            {/* Exercise Navigation Tabs */}
-            {exercises.length > 1 && (
-              <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-4">
-                {exercises.map((ex, idx) => (
-                  <button
-                    key={ex.id}
-                    onClick={() => {
-                      setCurrentExerciseIndex(idx);
-                      setupMutation.reset();
-                      const saved = latestAttempts[ex.id];
-                      if (saved) {
-                        setQuery(saved.query);
-                        setResult(saved.result);
-                      } else {
-                        setQuery('');
-                        setResult(null);
-                      }
-                    }}
-                    className={`px-4 py-2 rounded-t ${
-                      idx === currentExerciseIndex
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Exercise {idx + 1}
-                  </button>
-                ))}
-              </div>
-            )}
+            {exerciseTabs}
 
             <h3 className="text-xl font-bold mb-2">{currentExercise.title}</h3>
             <p className="text-gray-600 mb-4">{currentExercise.prompt}</p>
@@ -361,7 +374,7 @@ export default function LessonPage() {
               </>
             )}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

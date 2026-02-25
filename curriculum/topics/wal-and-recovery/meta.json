@@ -1,0 +1,8 @@
+{
+  "title": "WAL and Recovery: How PostgreSQL Survives Crashes",
+  "description": "Understand Write-Ahead Logging, checkpoints, crash recovery, and WAL's role in replication",
+  "level": 3,
+  "estimatedWeeks": 1,
+  "prerequisites": ["storage-internals", "transactions"],
+  "order": 11
+}

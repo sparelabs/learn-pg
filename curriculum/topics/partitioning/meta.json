@@ -1,0 +1,8 @@
+{
+  "title": "Table Partitioning",
+  "description": "Manage large tables with range, hash, and list partitioning for better performance and maintenance",
+  "level": 3,
+  "estimatedWeeks": 1,
+  "prerequisites": ["query-planner-internals", "storage-internals"],
+  "order": 12
+}

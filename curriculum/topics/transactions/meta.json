@@ -1,8 +1,8 @@
 {
-  "title": "Transaction Isolation",
-  "description": "Understand how PostgreSQL handles concurrent transactions and isolation levels",
+  "title": "Transactions and Concurrency Control",
+  "description": "Master isolation levels, locking, deadlocks, and concurrent access patterns in PostgreSQL",
   "level": 3,
-  "estimatedWeeks": 1,
+  "estimatedWeeks": 2,
   "prerequisites": ["basics"],
   "order": 10
 }

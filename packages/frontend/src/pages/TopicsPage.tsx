@@ -1,7 +1,26 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Topic } from '@learn-pg/shared';
+import type { Topic, Lesson } from '@learn-pg/shared';
+import { unescape } from 'querystring';
+
+function getLessonStatus(lesson: Lesson, completedSet: Set<string>): 'not-started' | 'in-progress' | 'complete' {
+  const exercises = lesson.exercises || [];
+  if (exercises.length === 0) return 'not-started';
+  const completedCount = exercises.filter(ex => completedSet.has(ex.id)).length;
+  if (completedCount === 0) return 'not-started';
+  if (completedCount >= exercises.length) return 'complete';
+  return 'in-progress';
+}
+
+function getLessonButtonLabel(status: 'not-started' | 'in-progress' | 'complete'): string | undefined {
+  switch (status) {
+    case 'complete': return 'Complete';
+    case 'in-progress': return 'Continue';
+    default: return undefined;
+  }
+}
 
 export default function TopicsPage() {
   const { data, isLoading } = useQuery({
@@ -9,7 +28,16 @@ export default function TopicsPage() {
     queryFn: api.getTopics
   });
 
+  const { data: completedData } = useQuery({
+    queryKey: ['completedExercises'],
+    queryFn: api.getCompletedExerciseIds
+  });
+
   const topics: Topic[] = data?.topics || [];
+  const completedSet = useMemo(
+    () => new Set<string>(completedData?.completedIds || []),
+    [completedData]
+  );
 
   if (isLoading) {
     return <div className="max-w-7xl mx-auto px-4 py-8">Loading...</div>;
@@ -52,12 +80,28 @@ export default function TopicsPage() {
                     Prerequisites: {topic.prerequisites.length}
                   </div>
                 )}
-                <Link
-                  to={`/lessons/${topic.lessons[0]?.id}`}
-                  className="inline-block bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded transition-colors"
-                >
-                  Start Learning
-                </Link>
+                <div className="space-y-2">
+                  {topic.lessons.map((lesson) => {
+                    const status = getLessonStatus(lesson, completedSet);
+                    const buttonLabel = getLessonButtonLabel(status);
+                    const buttonText = buttonLabel ? `${lesson.title} (${buttonLabel})` : lesson.title;
+                    return (
+                      <Link
+                        key={lesson.id}
+                        to={`/lessons/${lesson.id}`}
+                        className={`block px-4 py-2 rounded transition-colors text-sm ${
+                          status === 'complete'
+                            ? 'bg-green-100 hover:bg-green-200 text-green-800'
+                            : status === 'in-progress'
+                            ? 'bg-yellow-100 hover:bg-yellow-200 text-yellow-800'
+                            : 'bg-primary-600 hover:bg-primary-700 text-white'
+                        }`}
+                      >
+                        {buttonText}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             ))}
           </div>

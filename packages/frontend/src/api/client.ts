@@ -19,6 +19,10 @@ export const api = {
     }).then(r => r.json()),
   getHints: (id: string, count: number) =>
     fetch(`${API_BASE}/exercises/${id}/hints?count=${count}`).then(r => r.json()),
+  getExerciseAttempts: (id: string) =>
+    fetch(`${API_BASE}/exercises/${id}/attempts`).then(r => r.json()),
+  getCompletedExerciseIds: () =>
+    fetch(`${API_BASE}/exercises/completed`).then(r => r.json()),
 
   // Progress
   getProgress: () => fetch(`${API_BASE}/progress`).then(r => r.json()),

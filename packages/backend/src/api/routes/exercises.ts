@@ -110,12 +110,6 @@ export async function exercisesRoutes(fastify: FastifyInstance) {
     return { hints };
   });
 
-  // Get all completed exercise IDs
-  fastify.get('/exercises/completed', async (request, reply) => {
-    const completedIds = progressService.getCompletedExerciseIds();
-    return { completedIds };
-  });
-
   // Get exercise attempts history
   fastify.get('/exercises/:exerciseId/attempts', async (request, reply) => {
     const { exerciseId } = request.params as { exerciseId: string };

@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Topic, Lesson } from '@learn-pg/shared';
-import { unescape } from 'querystring';
+import type { Topic, Lesson, TopicProgress } from '@learn-pg/shared';
 
 function getLessonStatus(lesson: Lesson, completedSet: Set<string>): 'not-started' | 'in-progress' | 'complete' {
   const exercises = lesson.exercises || [];
@@ -28,15 +27,19 @@ export default function TopicsPage() {
     queryFn: api.getTopics
   });
 
-  const { data: completedData } = useQuery({
-    queryKey: ['completedExercises'],
-    queryFn: api.getCompletedExerciseIds
+  const { data: progressData } = useQuery({
+    queryKey: ['progress'],
+    queryFn: api.getProgress
   });
 
   const topics: Topic[] = data?.topics || [];
   const completedSet = useMemo(
-    () => new Set<string>(completedData?.completedIds || []),
-    [completedData]
+    () => {
+      const ids: string[] = (progressData?.progress?.topicProgress || [])
+        .flatMap((tp: TopicProgress) => tp.completedExercises);
+      return new Set<string>(ids);
+    },
+    [progressData]
   );
 
   if (isLoading) {

@@ -98,7 +98,7 @@ const exercises: Exercise[] = [
     lessonId: 'caching-and-prepared-statements-02',
     type: 'sql-query',
     title: 'Analyze Index Cache Performance',
-    prompt: 'Write a query to show index cache statistics. Include schemaname, relname (as index_name), idx_blks_read (as disk_reads), idx_blks_hit (as cache_hits), and cache hit ratio as a percentage. Only show indexes with at least one access (cache hits or disk reads > 0). Order by disk_reads descending, limit to 10.',
+    prompt: 'Write a query to show index cache statistics. Include schemaname, relname (as table_name), indexrelname (as index_name), idx_blks_read (as disk_reads), idx_blks_hit (as cache_hits), and cache hit ratio as a percentage. Only show indexes with at least one access (cache hits or disk reads > 0). Order by disk_reads descending, limit to 10.',
     setupSql: `
       CREATE TABLE index_test (id int PRIMARY KEY, email text, name text);
       CREATE INDEX index_test_email_idx ON index_test(email);
@@ -108,6 +108,7 @@ const exercises: Exercise[] = [
     `,
     hints: [
       'Query pg_statio_user_indexes',
+      'relname is the table name, indexrelname is the index name',
       'Use idx_blks_read and idx_blks_hit',
       'Filter WHERE idx_blks_hit + idx_blks_read > 0',
       'Calculate ratio and order by disk reads'
@@ -118,7 +119,7 @@ const exercises: Exercise[] = [
       rules: {
         rowCount: { max: 10 },
         columns: {
-          required: ['index_name', 'disk_reads', 'cache_hits'],
+          required: ['table_name', 'index_name', 'disk_reads', 'cache_hits'],
           exactMatch: false
         }
       }

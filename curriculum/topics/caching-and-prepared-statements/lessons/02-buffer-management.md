@@ -75,14 +75,15 @@ Indexes should have very high cache hit ratios (typically > 99.5%):
 ```sql
 SELECT
     schemaname,
-    relname AS index_name,
+    relname AS table_name,
+    indexrelname AS index_name,
     idx_blks_read AS disk_reads,
     idx_blks_hit AS cache_hits,
     ROUND(
         100.0 * idx_blks_hit / NULLIF(idx_blks_hit + idx_blks_read, 0),
         2
     ) AS cache_hit_ratio,
-    pg_size_pretty(pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname))) AS index_size
+    pg_size_pretty(pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(indexrelname))) AS index_size
 FROM pg_statio_user_indexes
 WHERE idx_blks_hit + idx_blks_read > 0
 ORDER BY idx_blks_read DESC

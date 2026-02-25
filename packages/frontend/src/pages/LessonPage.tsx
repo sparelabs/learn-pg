@@ -202,7 +202,7 @@ export default function LessonPage() {
                     onClick={() => navigate('/topics')}
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded font-medium"
                   >
-                    Back to Topics ✓
+                    Back to Topics (All Exercises Complete) ✓
                   </button>
                 ) : null}
               </div>

@@ -8,6 +8,22 @@ estimatedMinutes: 45
 
 Effective cache management is critical for PostgreSQL performance. This lesson covers how to monitor cache health, diagnose caching issues, and optimize buffer usage.
 
+## How the Buffer Manager Works
+
+![Buffer Manager sits between queries and disk](https://cs186berkeley.net/notes/assets/images/04-BufferMgmt/BufferManager.jpg)
+*The buffer manager is the gatekeeper between your queries and disk. Every page read or write goes through it — making it the single most important component for performance. (Source: [Berkeley CS 186](https://cs186berkeley.net/notes/note5/))*
+
+When PostgreSQL needs a page, the buffer manager:
+1. Checks if the page is already in a buffer frame (cache hit — fast)
+2. If not, finds a free frame or evicts a page using clock-sweep
+3. Reads the page from disk into the frame (cache miss — slow)
+4. Returns the page to the query
+
+![Buffer frame metadata table](https://cs186berkeley.net/notes/assets/images/04-BufferMgmt/MetadataTable.png)
+*Each buffer frame tracks metadata: which page it holds, whether it's been modified (dirty bit), and how many operations are currently using it (pin count). A page with pin count > 0 cannot be evicted. (Source: [Berkeley CS 186](https://cs186berkeley.net/notes/note5/))*
+
+The monitoring queries in this lesson let you observe this system in action — seeing which pages are cached, which are dirty, and where your cache misses are coming from.
+
 ## Understanding Buffer Cache Metrics
 
 ### Cache Hit Ratio: The Primary Metric
@@ -68,6 +84,32 @@ LIMIT 20;
 - **High disk reads + high ratio**: Recently accessed, normal behavior
 - **Low ratio + small table**: Should be fully cached, investigate queries
 
+> **Real-World Example (Spare)**
+>
+> At Spare, the `FleetAccessRule` table is the hottest in the buffer pool — it's
+> joined on nearly every API query for access control (34 billion cumulative index
+> scans). Despite being a modest-sized table, it dominates cache because of
+> access frequency. Meanwhile, the `Estimate` table (333M rows, 204 GB) has
+> indexes alone weighing 90 GB — far too large to fit in shared_buffers. Its
+> cache hit ratio depends heavily on which estimates are "hot" (recent rides).
+>
+> **Try It Yourself**: Open Metabase and run:
+> ```sql
+> SELECT relname,
+>   heap_blks_read AS disk_reads,
+>   heap_blks_hit AS cache_hits,
+>   CASE WHEN heap_blks_hit + heap_blks_read > 0
+>     THEN (100.0 * heap_blks_hit / (heap_blks_hit + heap_blks_read))::numeric(5,2)
+>     ELSE 0 END AS cache_hit_pct,
+>   pg_size_pretty(pg_relation_size(relid)) AS table_size
+> FROM pg_statio_user_tables
+> WHERE schemaname = 'public'
+> ORDER BY heap_blks_read DESC LIMIT 15;
+> ```
+> Compare the cache hit ratios: small, frequently-accessed tables like
+> `FleetAccessRule` will be near 100%, while large tables like `Estimate`
+> will be lower.
+
 ### Index Cache Statistics
 
 Indexes should have very high cache hit ratios (typically > 99.5%):
@@ -95,6 +137,9 @@ Low cache hit ratio on indexes often indicates:
 - Random access pattern on large index
 
 ## Detailed Cache Content Analysis
+
+![Pages contain records organized within files](https://cs186berkeley.net/notes/assets/images/02-DisksFiles/PageVisual.png)
+*Each 8KB page holds multiple rows (records). When PostgreSQL caches a "buffer", it's caching one of these pages. A table with 1 million rows might span ~50,000 pages — and you can see exactly which pages are cached. (Source: [Berkeley CS 186](https://cs186berkeley.net/notes/note3/))*
 
 ### Using pg_buffercache
 
@@ -158,6 +203,30 @@ ORDER BY buffers DESC;
 - Tables: 40-60% (hot data)
 - TOAST: < 10% (large values)
 
+> **Real-World Example (Spare)**
+>
+> The `Charge` table at Spare has 12 GB of indexes but only 1 GB of actual
+> table data — the indexes are 12x larger than the table! This means the
+> indexes are likely fully cache-resident (they're small enough to fit in
+> shared_buffers), while the table data cycles through the cache as needed.
+> The `Slot` table shows an even more extreme ratio: 68 GB of indexes vs
+> 38 GB of table data.
+>
+> **Try It Yourself**: Open Metabase and run:
+> ```sql
+> SELECT relname,
+>   pg_size_pretty(pg_relation_size(relid)) AS table_size,
+>   pg_size_pretty(pg_indexes_size(relid)) AS index_size,
+>   CASE WHEN pg_relation_size(relid) > 0
+>     THEN (pg_indexes_size(relid)::numeric / pg_relation_size(relid))::numeric(5,1)
+>     ELSE 0 END AS index_to_table_ratio
+> FROM pg_stat_user_tables
+> WHERE schemaname = 'public'
+> ORDER BY pg_indexes_size(relid) DESC LIMIT 15;
+> ```
+> Tables where `index_to_table_ratio > 1` have more index data than table
+> data — common for heavily-queried tables with many access patterns.
+
 ### Dirty Buffer Analysis
 
 Dirty buffers are modified pages not yet written to disk:
@@ -218,6 +287,13 @@ WHERE datname = current_database();
 ```
 
 Log this every 5-15 minutes to track trends.
+
+## Why Cache Performance Matters So Much
+
+![Storage hierarchy comparing disk and SSD performance](https://cs186berkeley.net/notes/assets/images/02-DisksFiles/hiearchy.png)
+*The storage hierarchy shows why caching is critical: memory access is orders of magnitude faster than disk. Even SSDs are ~1000x slower than RAM for random access. Every cache miss means crossing this gap. (Source: [Berkeley CS 186](https://cs186berkeley.net/notes/note3/))*
+
+When you see a low cache hit ratio, remember this hierarchy. A query that gets 99% cache hits vs 95% cache hits isn't just "4% worse" — it means 5x more requests crossing the memory-to-disk boundary, each one paying the full latency penalty.
 
 ## Diagnosing Cache Performance Issues
 
@@ -308,6 +384,26 @@ LIMIT 10;
 - Use buffer rings (automatic for VACUUM)
 - Tune queries to use indexes instead of scans
 - Increase shared_buffers to accommodate both working sets
+
+> **Real-World Example (Spare)**
+>
+> The `Request` table (34 GB, 694M index scans) is heavily queried via
+> indexes during normal OLTP traffic — finding rides, checking statuses.
+> But it has also had 42 sequential scans (likely from analytics or
+> batch jobs). Each seq scan on 34 GB briefly floods the cache. PostgreSQL's
+> buffer ring limits the damage to ~32 pages, but if `shared_buffers` is
+> tight, even batch index scans on `Estimate` (101 GB) can pressure the cache.
+>
+> **Try It Yourself**: Open Metabase and run:
+> ```sql
+> SELECT relname, seq_scan, idx_scan,
+>   pg_size_pretty(pg_relation_size(relid)) AS table_size
+> FROM pg_stat_user_tables
+> WHERE schemaname = 'public' AND (seq_scan > 0 OR idx_scan > 1000000)
+> ORDER BY seq_scan DESC LIMIT 15;
+> ```
+> Tables with both `seq_scan > 0` and large sizes are candidates for
+> cache ratio drops.
 
 ### Problem 4: Index Not Cached Despite Heavy Use
 

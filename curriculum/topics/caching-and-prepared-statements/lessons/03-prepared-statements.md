@@ -33,6 +33,9 @@ EXECUTE get_user_by_email('bob@example.com');
 
 ### The Query Execution Lifecycle
 
+![Query plan showing join, filter, and projection operations](https://cs186berkeley.net/notes/assets/images/09-QueryOptimization/introqplan.png)
+*A query plan is a tree of operations. Each node (join, filter, project) has a cost — the planner's job is to find the cheapest tree. Prepared statements let PostgreSQL skip rebuilding this tree on every execution. (Source: [Berkeley CS 186](https://cs186berkeley.net/notes/note10/))*
+
 **Without prepared statements**:
 ```
 1. Parse SQL text       → Parse tree
@@ -389,6 +392,33 @@ conn.prepare('get_user', 'SELECT * FROM users WHERE email = $1')
 conn.exec_prepared('get_user', ['alice@example.com'])
 conn.exec_prepared('get_user', ['bob@example.com'])
 ```
+
+> **Real-World Example (Spare)**
+>
+> Spare's rider search lets operators find riders by name, email, or phone
+> using fuzzy matching. Under the hood, Sequelize generates parameterized
+> queries like `WHERE "firstName" ILIKE $1` — the search term is always a
+> parameter, never interpolated into SQL. This is critical because search
+> inputs come directly from users. The fuzzy search is powered by `pg_trgm`
+> GIN indexes on `OrganizationRider`:
+>
+> - `OrganizationRider_firstName_lastName_search_idx` (name search)
+> - `OrganizationRider_email_search_idx` (email search)
+> - `OrganizationRider_phoneNumber_search_idx` (phone search)
+>
+> Without parameterized queries, a malicious search like `'; DROP TABLE "OrganizationRider"; --`
+> could be catastrophic. With them, it's just a harmless string that returns no results.
+>
+> **Try It Yourself**: Open Metabase and run:
+> ```sql
+> SELECT indexname, indexdef
+> FROM pg_indexes
+> WHERE schemaname = 'public'
+>   AND indexdef LIKE '%gin_trgm%'
+> ORDER BY indexname;
+> ```
+> These GIN trigram indexes power the fuzzy search — and every query against
+> them uses parameterized prepared statements for safety.
 
 ## Performance Comparison
 

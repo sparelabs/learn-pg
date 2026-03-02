@@ -172,6 +172,77 @@ const exercises: Exercise[] = [
     },
     order: 6,
     difficulty: 5
+  },
+  {
+    id: 'plan-invalidation',
+    lessonId: 'caching-and-prepared-statements-04',
+    type: 'sql-query',
+    title: 'Plan Invalidation: New Index Changes the Plan',
+    prompt: 'PREPARE a statement that does a sequential scan (no index exists). Execute it. Then CREATE INDEX on the filtered column. Execute the same prepared statement again — the plan should change to use the new index. Use EXPLAIN EXECUTE to see the plan.',
+    setupSql: `
+      DROP TABLE IF EXISTS products CASCADE;
+      CREATE TABLE products (id SERIAL PRIMARY KEY, category TEXT, price NUMERIC);
+      INSERT INTO products (category, price)
+      SELECT CASE (i % 5) WHEN 0 THEN 'electronics' WHEN 1 THEN 'books' WHEN 2 THEN 'clothing' WHEN 3 THEN 'food' ELSE 'toys' END,
+             (random() * 100)::numeric
+      FROM generate_series(1, 100000) i;
+      ANALYZE products;
+    `,
+    hints: [
+      'PREPARE find_products AS SELECT * FROM products WHERE category = $1;',
+      'EXPLAIN EXECUTE find_products(\'electronics\');',
+      'CREATE INDEX idx_products_category ON products(category);',
+      'EXPLAIN EXECUTE find_products(\'electronics\');',
+      'The second EXPLAIN should show Index Scan instead of Seq Scan'
+    ],
+    explanation: 'When you create an index, PostgreSQL invalidates all cached plans that reference the affected table. The next EXECUTE triggers re-planning, which now considers the new index. This is why adding indexes improves performance even for already-prepared statements.',
+    validation: {
+      strategy: 'result-match',
+      rules: {
+        strategy: 'result-match',
+        rules: {
+          columns: { required: ['QUERY PLAN'] }
+        }
+      }
+    },
+    order: 7,
+    difficulty: 5
+  },
+  {
+    id: 'skewed-data-custom-plans',
+    lessonId: 'caching-and-prepared-statements-04',
+    type: 'sql-query',
+    title: 'Skewed Data: Why PostgreSQL Keeps Custom Plans',
+    prompt: 'Create a prepared statement on a table with highly skewed data. Execute it 6+ times with different parameters. Check pg_prepared_statements to see if it\'s using generic or custom plans.',
+    setupSql: `
+      DROP TABLE IF EXISTS events CASCADE;
+      CREATE TABLE events (id SERIAL PRIMARY KEY, type TEXT, data TEXT);
+      INSERT INTO events (type, data)
+      SELECT CASE WHEN i <= 10 THEN 'rare_event' ELSE 'common_event' END,
+             'data ' || i
+      FROM generate_series(1, 100000) i;
+      CREATE INDEX idx_events_type ON events(type);
+      ANALYZE events;
+    `,
+    hints: [
+      'PREPARE find_events AS SELECT * FROM events WHERE type = $1;',
+      'Execute 6 times: EXECUTE find_events(\'rare_event\'); (repeat)',
+      'Then check: SELECT name, generic_plans, custom_plans FROM pg_prepared_statements;',
+      'For skewed data, custom_plans should be higher than generic_plans'
+    ],
+    explanation: 'With 10 rows of "rare_event" vs 99,990 of "common_event", the optimal plan is very different per parameter. An Index Scan is ideal for rare_event, but a Seq Scan is better for common_event. PostgreSQL detects this via the 10% cost threshold and keeps generating custom plans.',
+    validation: {
+      strategy: 'result-match',
+      rules: {
+        strategy: 'result-match',
+        rules: {
+          columns: { required: ['name'] },
+          rowCount: { min: 1 }
+        }
+      }
+    },
+    order: 8,
+    difficulty: 6
   }
 ];
 

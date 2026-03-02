@@ -10,7 +10,7 @@ Query plan caching is a sophisticated optimization that can significantly improv
 
 ## Query Plan Lifecycle
 
-###Normal Query (No Caching)
+### Normal Query (No Caching)
 
 Every execution goes through full cycle:
 
@@ -66,6 +66,9 @@ EXECUTE (generic plan):
 Parsing and analysis saved, and eventually planning too!
 
 ## Custom Plans vs Generic Plans
+
+![Query plan iterator model](https://cs186berkeley.net/notes/assets/images/09-QueryOptimization/queryplan_iterator.png)
+*Query plans use a pull-based iterator model — each node calls `next()` on its children. When PostgreSQL caches a generic plan, it caches this entire tree of operators. (Source: [Berkeley CS 186](https://cs186berkeley.net/notes/note10/))*
 
 ### Custom Plans
 
@@ -135,20 +138,22 @@ EXECUTE get_orders(500);  -- Execution 5: Custom plan, cost = 8.6
 
 PostgreSQL tracks the average cost: (8.5 + 9.2 + 8.7 + 8.9 + 8.6) / 5 = 8.78
 
-### Phase 2: Generic Plan Evaluation
+### Phase 2: Generic Plan Evaluation (The 10% Rule)
 
 After 5 executions, PostgreSQL:
 1. Generates a generic plan (without parameter values)
 2. Estimates its cost: e.g., 9.5
 3. Compares: generic cost (9.5) vs average custom cost (8.78)
 
-**Decision logic**:
+**Decision logic** (the 10% cost threshold):
 ```python
-if generic_plan_cost <= avg_custom_plan_cost * 1.0:
-    use_generic_plan = True
+if generic_plan_cost <= avg_custom_plan_cost * 1.1:
+    use_generic_plan = True   # Generic is within 10% — good enough
 else:
     use_generic_plan = False  # Keep using custom plans
 ```
+
+The 10% margin means PostgreSQL will tolerate a slightly worse generic plan in exchange for eliminating planning overhead on every future execution. For a query running 10,000 times/second, saving 0.2ms of planning per execution adds up to 2 CPU-seconds per second saved.
 
 ### Phase 3: Execution 6 and Beyond
 
@@ -201,6 +206,19 @@ EXPLAIN EXECUTE get_orders(123);
 ```
 
 After 6+ executions, this shows the cached generic plan.
+
+## Why Plan Caching Matters: The Cost of Planning
+
+![Left-deep vs bushy plan trees](https://cs186berkeley.net/notes/assets/images/09-QueryOptimization/leftdeep.png)
+*The planner must search through many possible plan trees. PostgreSQL only considers left-deep trees (left), not bushy trees (right), limiting the search from N! to 2^N possibilities — but even 2^N is expensive for many tables. (Source: [Berkeley CS 186](https://cs186berkeley.net/notes/note10/))*
+
+PostgreSQL's planner uses a **dynamic programming algorithm** (based on IBM's System R optimizer) to find the best join order. For a query joining N tables:
+
+- **Pass 1**: Find best access path for each single table (Seq Scan vs Index Scan)
+- **Pass 2**: Find best 2-table join for each pair
+- **Pass 3+**: Build up to N-table plans
+
+This is expensive — even with pruning, planning a 5-table join evaluates hundreds of possible plans. By caching the generic plan, PostgreSQL avoids this entire search on subsequent executions. This is why `geqo_threshold = 12` exists: beyond 12 tables, even the planner gives up on exhaustive search and uses a genetic algorithm instead.
 
 ## Controlling Plan Choice
 
@@ -306,6 +324,16 @@ PREPARE get_orders (int) AS
 SET plan_cache_mode = 'force_custom_plan';
 ```
 
+> **Real-World Example (Spare)**
+>
+> At Spare, `Request` status distribution is heavily skewed — most requests
+> are in `completed` status (millions of rows), while statuses like
+> `driverCancelled` or `noDriversAvailable` have far fewer rows. A prepared
+> statement like `SELECT * FROM "Request" WHERE "status" = $1` would ideally
+> use Index Scan for rare statuses and Seq Scan for `completed`. This is
+> exactly the scenario where PostgreSQL keeps using custom plans — the generic
+> plan can't know which status you're querying for.
+
 ### Example 3: Temporal Query
 
 **Scenario**: Queries for recent data (hot partition) vs old data (cold partition)
@@ -324,6 +352,32 @@ PREPARE get_logs (date) AS
 ```sql
 SET plan_cache_mode = 'force_custom_plan';
 ```
+
+> **Real-World Example (Spare)**
+>
+> At Spare, Sequelize automatically generates parameterized queries that become
+> server-side prepared statements. The busiest queries execute 36M+ times with
+> **0ms planning time** — proof that generic plan caching is working. These are
+> access-control lookups on `FleetAccessRule` (34B cumulative index scans) where
+> the data distribution is uniform enough that the generic plan (Index Scan) is
+> optimal for all parameter values.
+>
+> Meanwhile, queries on skewed tables like `Request` (where status distribution
+> ranges from 10 rows for rare statuses to millions for common ones) may
+> benefit from custom plans to pick the right scan strategy per parameter.
+>
+> **Try It Yourself**: Open Metabase and run:
+> ```sql
+> SELECT calls,
+>   mean_plan_time::numeric(10,3) AS mean_plan_ms,
+>   mean_exec_time::numeric(10,3) AS mean_exec_ms,
+>   (total_exec_time / 1000)::numeric(10,1) AS total_exec_sec
+> FROM pg_stat_statements
+> WHERE calls > 100000
+> ORDER BY calls DESC LIMIT 10;
+> ```
+> Queries showing 0ms plan time are using cached generic plans. Queries with
+> non-zero plan time are still generating custom plans per execution.
 
 ## Plan Invalidation
 

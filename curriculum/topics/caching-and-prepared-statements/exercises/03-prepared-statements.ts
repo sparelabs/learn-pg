@@ -33,17 +33,17 @@ const exercises: Exercise[] = [
     lessonId: 'caching-and-prepared-statements-03',
     type: 'sql-query',
     title: 'Execute a Prepared Statement',
-    prompt: 'After creating the prepared statement "get_product", execute it with product ID 2.',
+    prompt: 'Create a prepared statement named "get_product" that accepts an integer parameter and returns all columns from products where id = $1. Then execute it with product ID 2.',
     setupSql: `
       CREATE TABLE products (id int PRIMARY KEY, name text, price numeric);
       INSERT INTO products VALUES (1, 'Widget', 19.99), (2, 'Gadget', 29.99), (3, 'Doohickey', 39.99);
-      PREPARE get_product (int) AS SELECT * FROM products WHERE id = $1;
     `,
     hints: [
-      'Use EXECUTE statement_name(value)',
-      'Pass 2 as the parameter'
+      'First PREPARE the statement, then EXECUTE it in the same submission',
+      'PREPARE get_product (int) AS SELECT * FROM products WHERE id = $1',
+      'EXECUTE get_product(2)'
     ],
-    explanation: 'EXECUTE runs a prepared statement with specific parameter values. The query structure was already parsed during PREPARE, so only execution happens here.',
+    explanation: 'EXECUTE runs a prepared statement with specific parameter values. The query structure was already parsed during PREPARE, so only execution happens here. Both PREPARE and EXECUTE must happen in the same session.',
     validation: {
       strategy: 'result-match',
       rules: {
@@ -96,18 +96,17 @@ const exercises: Exercise[] = [
     lessonId: 'caching-and-prepared-statements-03',
     type: 'sql-query',
     title: 'View Prepared Statements',
-    prompt: 'Write a query to display all currently prepared statements in the session. Show the name, statement, and parameter_types columns from pg_prepared_statements.',
+    prompt: 'Create two prepared statements: "get_product" (accepts int, selects all from products where id = $1) and "find_expensive" (accepts numeric, selects all from products where price > $1). Then query pg_prepared_statements to show the name, statement, and parameter_types of all prepared statements.',
     setupSql: `
       CREATE TABLE products (id int PRIMARY KEY, name text, price numeric);
       INSERT INTO products VALUES (1, 'Widget', 19.99), (2, 'Gadget', 29.99);
-      PREPARE get_product (int) AS SELECT * FROM products WHERE id = $1;
-      PREPARE find_expensive (numeric) AS SELECT * FROM products WHERE price > $1;
     `,
     hints: [
-      'Query the pg_prepared_statements view',
+      'Create both prepared statements first, then query pg_prepared_statements',
+      'PREPARE get_product (int) AS SELECT * FROM products WHERE id = $1',
       'SELECT name, statement, parameter_types FROM pg_prepared_statements'
     ],
-    explanation: 'The pg_prepared_statements view shows all prepared statements in the current session, allowing you to inspect their definitions and monitor their usage.',
+    explanation: 'The pg_prepared_statements view shows all prepared statements in the current session, allowing you to inspect their definitions and monitor their usage. Prepared statements are session-scoped, so you must create them in the same session where you query them.',
     validation: {
       strategy: 'result-match',
       rules: {
@@ -155,19 +154,17 @@ const exercises: Exercise[] = [
     lessonId: 'caching-and-prepared-statements-03',
     type: 'sql-query',
     title: 'Deallocate Prepared Statement',
-    prompt: 'Query pg_prepared_statements to verify there are prepared statements, then deallocate a specific prepared statement named "get_product", and query pg_prepared_statements again to confirm it\'s gone.',
+    prompt: 'Create two prepared statements: "get_product" (int param, selects from products by id) and "find_expensive" (numeric param, selects from products where price > $1). Then deallocate "get_product" and query pg_prepared_statements to count the remaining statements.',
     setupSql: `
       CREATE TABLE products (id int PRIMARY KEY, name text, price numeric);
-      PREPARE get_product (int) AS SELECT * FROM products WHERE id = $1;
-      PREPARE find_expensive (numeric) AS SELECT * FROM products WHERE price > $1;
     `,
     hints: [
-      'First SELECT COUNT(*) FROM pg_prepared_statements to see count',
+      'First PREPARE both statements',
       'Then DEALLOCATE get_product',
-      'Then SELECT COUNT(*) FROM pg_prepared_statements again',
-      'The second count should be 1 less'
+      'Then SELECT COUNT(*) FROM pg_prepared_statements',
+      'The count should be 1'
     ],
-    explanation: 'DEALLOCATE removes a prepared statement from the session. This is useful for cleaning up when you\'re done with a statement or if you want to redefine it.',
+    explanation: 'DEALLOCATE removes a prepared statement from the session. This is useful for cleaning up when you\'re done with a statement or if you want to redefine it. Prepared statements are session-scoped, so they only exist in the connection where they were created.',
     validation: {
       strategy: 'result-match',
       rules: {

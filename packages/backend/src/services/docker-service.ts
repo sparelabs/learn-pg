@@ -91,6 +91,16 @@ export class DockerService {
     throw new Error('PostgreSQL container failed to become healthy');
   }
 
+  // When pg processes multi-statement queries (e.g. "PREPARE ...; EXECUTE ...;"),
+  // it returns an array of results. Extract the last result since that's the
+  // meaningful one for validation (e.g. the EXECUTE result, not the PREPARE result).
+  private extractResult(result: any): any {
+    if (Array.isArray(result)) {
+      return result[result.length - 1];
+    }
+    return result;
+  }
+
   async executeQuery(query: string, params?: any[], timeoutMs: number = 5000): Promise<any> {
     const client = new Client(this.config);
     try {
@@ -100,7 +110,7 @@ export class DockerService {
       await client.query(`SET statement_timeout = ${timeoutMs}`);
 
       const result = await client.query(query, params);
-      return result;
+      return this.extractResult(result);
     } finally {
       await client.end();
     }
@@ -113,7 +123,7 @@ export class DockerService {
       await client.query(`SET statement_timeout = ${timeoutMs}`);
       await client.query(`SET search_path TO ${schema}`);
       const result = await client.query(query, params);
-      return result;
+      return this.extractResult(result);
     } finally {
       await client.end();
     }
@@ -125,7 +135,7 @@ export class DockerService {
       await client.connect();
       await client.query(`SET statement_timeout = ${timeoutMs}`);
       const result = await client.query(query, params);
-      return result;
+      return this.extractResult(result);
     } finally {
       await client.end();
     }
@@ -138,7 +148,7 @@ export class DockerService {
       await client.query(`SET statement_timeout = ${timeoutMs}`);
       await client.query(`SET search_path TO ${schema}`);
       const result = await client.query(query, params);
-      return result;
+      return this.extractResult(result);
     } finally {
       await client.end();
     }
@@ -150,7 +160,7 @@ export class DockerService {
       await client.connect();
       await client.query(`SET statement_timeout = ${timeoutMs}`);
       const result = await client.query(query, params);
-      return result;
+      return this.extractResult(result);
     } finally {
       await client.end();
     }

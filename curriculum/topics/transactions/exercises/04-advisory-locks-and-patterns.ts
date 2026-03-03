@@ -6,14 +6,14 @@ export const exercises: Exercise[] = [
     lessonId: '',
     type: 'sql-query',
     title: 'Acquire and View Advisory Lock',
-    prompt: 'Acquire an advisory lock, verify it appears in pg_locks, then release it. Run: SELECT pg_advisory_lock(42); SELECT locktype, objid, mode, granted FROM pg_locks WHERE locktype = \'advisory\'; SELECT pg_advisory_unlock(42);',
+    prompt: 'Acquire an advisory lock with key 42, then verify it appears in pg_locks. Run: SELECT pg_advisory_lock(42); SELECT locktype, objid, mode, granted FROM pg_locks WHERE locktype = \'advisory\';',
     setupSql: '',
     hints: [
       'pg_advisory_lock(42) acquires a session-level lock with key 42',
       'pg_locks WHERE locktype = \'advisory\' shows advisory locks',
-      'pg_advisory_unlock(42) releases the lock'
+      'The lock is automatically released when the connection closes'
     ],
-    explanation: 'Advisory locks appear in pg_locks just like regular locks. The objid column shows the lock key (42 in this case). Advisory locks are held by the session (connection), not by a specific transaction. They\'re invisible to MVCC — they only affect other sessions trying to acquire the same advisory lock.',
+    explanation: 'Advisory locks appear in pg_locks just like regular locks. The objid column shows the lock key (42 in this case). Advisory locks are held by the session (connection), not by a specific transaction. They\'re invisible to MVCC — they only affect other sessions trying to acquire the same advisory lock. Session-level advisory locks are automatically released when the connection ends.',
     validation: {
       strategy: 'result-match',
       rules: {
@@ -33,14 +33,14 @@ export const exercises: Exercise[] = [
     lessonId: '',
     type: 'sql-query',
     title: 'Non-Blocking Advisory Lock',
-    prompt: 'Use the non-blocking variant pg_try_advisory_lock() which returns true if the lock was acquired, false if it\'s already held by another session. Run: SELECT pg_try_advisory_lock(42) AS acquired; then SELECT pg_advisory_unlock(42);',
+    prompt: 'Use the non-blocking variant pg_try_advisory_lock() which returns true if the lock was acquired, false if it\'s already held by another session. Run: SELECT pg_try_advisory_lock(42) AS acquired;',
     setupSql: '',
     hints: [
       'pg_try_advisory_lock returns true (acquired) or false (already held)',
       'Since no other session holds lock 42, it should return true',
-      'Always unlock when done: pg_advisory_unlock(42)'
+      'The lock is automatically released when the connection closes'
     ],
-    explanation: 'pg_try_advisory_lock is the non-blocking variant — it returns immediately with true or false instead of waiting. This is the pattern for singleton job execution: try to acquire the lock, and if false, another instance is already running so exit gracefully. In this case it returns true because no other session holds lock 42.',
+    explanation: 'pg_try_advisory_lock is the non-blocking variant — it returns immediately with true or false instead of waiting. This is the pattern for singleton job execution: try to acquire the lock, and if false, another instance is already running so exit gracefully. In this case it returns true because no other session holds lock 42. Session-level advisory locks are automatically released when the connection ends.',
     validation: {
       strategy: 'result-match',
       rules: {

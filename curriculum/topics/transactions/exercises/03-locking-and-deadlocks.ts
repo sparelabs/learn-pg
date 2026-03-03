@@ -6,7 +6,7 @@ export const exercises: (Exercise | MultiSessionExercise)[] = [
     lessonId: '',
     type: 'sql-query',
     title: 'View Active Locks',
-    prompt: 'Start a transaction, lock some rows with FOR UPDATE, then query pg_locks to see the locks you\'re holding. Run: BEGIN; SELECT * FROM test_locks FOR UPDATE; SELECT locktype, relation::regclass, mode, granted FROM pg_locks WHERE relation = \'test_locks\'::regclass; COMMIT;',
+    prompt: 'Start a transaction, lock some rows with FOR UPDATE, then query pg_locks to see the locks you\'re holding. Run: BEGIN; SELECT * FROM test_locks FOR UPDATE; SELECT locktype, relation::regclass, mode, granted FROM pg_locks WHERE relation = \'test_locks\'::regclass;',
     setupSql: `
       DROP TABLE IF EXISTS test_locks;
       CREATE TABLE test_locks (
@@ -19,9 +19,9 @@ export const exercises: (Exercise | MultiSessionExercise)[] = [
       'Use BEGIN to start a transaction, then SELECT ... FOR UPDATE',
       'Query pg_locks filtered by your table\'s OID',
       'Use relation::regclass to convert OIDs to table names',
-      'End with COMMIT to release locks'
+      'The transaction will be cleaned up automatically when the connection closes'
     ],
-    explanation: 'pg_locks shows all locks in the system. When you SELECT ... FOR UPDATE, PostgreSQL acquires RowExclusiveLock on the table and individual row locks. The relation::regclass cast converts the relation OID to a human-readable table name.',
+    explanation: 'pg_locks shows all locks in the system. When you SELECT ... FOR UPDATE, PostgreSQL acquires RowExclusiveLock on the table and individual row locks. The relation::regclass cast converts the relation OID to a human-readable table name. The transaction is automatically rolled back when the connection ends.',
     validation: {
       strategy: 'result-match',
       rules: {

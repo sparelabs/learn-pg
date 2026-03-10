@@ -111,16 +111,47 @@ Larger `work_mem` allows in-memory sorts instead of disk-based sorts:
 SET work_mem = '256MB';
 ```
 
-## Planner Search Strategy
+## System R Optimizer: Dynamic Programming Plan Search
 
-The planner doesn't try every possible plan (that would be exponential complexity). Instead:
+PostgreSQL uses a dynamic programming algorithm (based on IBM's System R) to find the best join order for multi-table queries.
 
-1. **For small joins** (< 12 tables): Near-exhaustive search
-2. **For large joins**: Genetic Query Optimizer (GEQO) uses genetic algorithms
+### The Search Process
+
+For a 4-table join (A, B, C, D):
+
+- **Pass 1**: Find the best single-table access path for each table (4 plans)
+  - A: Seq Scan or Index Scan?
+  - B: Seq Scan or Index Scan?
+  - ... etc.
+
+- **Pass 2**: Find the best 2-table join for each pair (~6 plans, pruned)
+  - A⋈B: Nested Loop, Hash Join, or Merge Join?
+  - A⋈C: ...
+  - ... etc. (keep only the cheapest for each pair)
+
+- **Pass 3**: Find the best 3-table join (~6 plans)
+  - (A⋈B)⋈C, (A⋈C)⋈B, ... etc.
+
+- **Pass 4**: Final 4-table plan
+
+This is why `geqo_threshold = 12` exists — beyond 12 tables, this exhaustive search becomes too expensive (2^N possibilities) and PostgreSQL switches to a genetic algorithm.
 
 ```sql
 SHOW geqo_threshold;  -- Tables before GEQO kicks in (default: 12)
 ```
+
+### join_collapse_limit
+
+The `join_collapse_limit` setting (default 8) controls how many tables the planner will try to reorder. When your query has more joins than this limit, the planner respects your explicit join order instead of searching for the optimal one.
+
+Setting `join_collapse_limit = 1` forces the planner to use YOUR join order:
+```sql
+SET join_collapse_limit = 1;
+-- Planner will join a→b→c→d in exactly this order
+SELECT * FROM a JOIN b ON ... JOIN c ON ... JOIN d ON ...;
+```
+
+This can be useful when you know the optimal join order better than the planner (rare), or when planning time for complex queries is too long.
 
 ## Plan Types
 

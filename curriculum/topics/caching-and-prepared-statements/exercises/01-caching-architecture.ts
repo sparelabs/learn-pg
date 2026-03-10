@@ -126,6 +126,72 @@ const exercises: Exercise[] = [
     },
     order: 5,
     difficulty: 3
+  },
+  {
+    id: 'buffer-ring-observation',
+    lessonId: 'caching-and-prepared-statements-01',
+    type: 'sql-query',
+    title: 'Buffer Ring: Sequential Scan Isolation',
+    prompt: 'Run EXPLAIN (ANALYZE, BUFFERS) on a sequential scan of the large table. Observe the "shared hit" count — it should be low (~32) because PostgreSQL uses a buffer ring to prevent this scan from flooding the cache.',
+    setupSql: `
+      DROP TABLE IF EXISTS huge_table CASCADE;
+      CREATE TABLE huge_table (id SERIAL PRIMARY KEY, data TEXT, value NUMERIC);
+      INSERT INTO huge_table (data, value)
+      SELECT repeat('x', 200), random() * 1000
+      FROM generate_series(1, 200000) i;
+      ANALYZE huge_table;
+    `,
+    hints: [
+      'SET enable_indexscan = off; SET enable_bitmapscan = off;',
+      'EXPLAIN (ANALYZE, BUFFERS) SELECT count(*) FROM huge_table WHERE value > 500;',
+      'Look at the "Buffers: shared hit=N read=M" line'
+    ],
+    explanation: 'PostgreSQL detects that this sequential scan will read many pages and assigns it a buffer ring of ~32 pages (256KB). The scan cycles through these pages, reading from disk each time rather than polluting the main buffer pool. This protects other cached data from eviction.',
+    validation: {
+      strategy: 'result-match',
+      rules: {
+        columns: {
+          required: ['QUERY PLAN']
+        }
+      }
+    },
+    order: 6,
+    difficulty: 5
+  },
+  {
+    id: 'cache-impact-check',
+    lessonId: 'caching-and-prepared-statements-01',
+    type: 'sql-query',
+    title: 'Cache Impact: Check Buffer Contents After Large Scan',
+    prompt: 'After the large sequential scan, check pg_buffercache to see how many pages from huge_table are actually in the buffer pool. It should be surprisingly low due to the buffer ring.',
+    setupSql: `
+      DROP TABLE IF EXISTS huge_table CASCADE;
+      CREATE TABLE huge_table (id SERIAL PRIMARY KEY, data TEXT, value NUMERIC);
+      INSERT INTO huge_table (data, value)
+      SELECT repeat('x', 200), random() * 1000
+      FROM generate_series(1, 200000) i;
+      ANALYZE huge_table;
+      SET enable_indexscan = off;
+      SET enable_bitmapscan = off;
+      SELECT count(*) FROM huge_table WHERE value > 500;
+    `,
+    hints: [
+      'SELECT c.relname, count(*) AS buffers FROM pg_buffercache b JOIN pg_class c ON c.relfilenode = b.relfilenode WHERE c.relname = \'huge_table\' GROUP BY c.relname;',
+      'The buffer count should be much smaller than the total pages in the table'
+    ],
+    explanation: 'Despite scanning a large table, only ~32 pages remain in the buffer cache. The buffer ring recycled pages during the scan, preventing cache pollution. This is a critical optimization for mixed OLTP/analytics workloads.',
+    validation: {
+      strategy: 'result-match',
+      rules: {
+        rowCount: { max: 1 },
+        columns: {
+          required: ['relname', 'buffers']
+        }
+      }
+    },
+    requiresSuperuser: true,
+    order: 7,
+    difficulty: 6
   }
 ];
 

@@ -590,6 +590,34 @@ EXPLAIN ANALYZE SELECT ...;
 
 Look for big discrepancies in EXPLAIN ANALYZE output.
 
+## Interesting Orders: Why the Planner Sometimes Picks a "Worse" Plan
+
+Sometimes the planner chooses a slightly more expensive join method because its output is sorted in a useful way — this is called an **interesting order**.
+
+### Example
+
+Consider: `SELECT * FROM orders o JOIN customers c ON o.customer_id = c.id ORDER BY o.customer_id`
+
+- **Hash Join** cost: 100 + **Sort cost: 50** = 150 total
+- **Merge Join** cost: 120 (but output already sorted!) + **Sort cost: 0** = 120 total
+
+The merge join appears more expensive for just the join step (120 > 100), but because it produces sorted output matching the ORDER BY, the total query cost is lower.
+
+### How the Planner Tracks This
+
+During dynamic programming plan search, PostgreSQL doesn't just keep the single cheapest partial plan for each set of tables. It also keeps plans with "interesting" sort orders — orders that could eliminate a later Sort operation.
+
+A plan with sort order matching:
+- An ORDER BY clause
+- A GROUP BY clause
+- A merge join requirement for a later join
+
+...is kept even if a cheaper unsorted plan exists, because the total query cost may be lower.
+
+### Practical Impact
+
+This explains why you sometimes see Merge Join in EXPLAIN output even when the planner estimates Hash Join is cheaper for the join alone. The planner is optimizing the **total query cost**, not individual node costs.
+
 ## Key Takeaways
 
 - Cost is measured in arbitrary units, roughly equivalent to page reads
@@ -601,6 +629,25 @@ Look for big discrepancies in EXPLAIN ANALYZE output.
 - Memory settings (work_mem) significantly impact sort/hash costs
 - Extended statistics help with correlated columns
 - Compare estimated vs. actual rows in EXPLAIN ANALYZE to detect issues
+
+> **Real-World Example (Spare)**
+>
+> The `Request` table shows how correlation affects planner decisions. The
+> `anonymized` column has correlation **0.95** (almost all values are false,
+> physically ordered) — index scans on this column read heap pages sequentially.
+> But `estimateId` has correlation **0.005** (near-random UUIDs) — an index scan
+> on this column would cause massive random I/O, so the planner often prefers a
+> sequential scan even with an index available. Meanwhile, `createdAt` has
+> correlation **0.35** — moderate, because UUID primary keys prevent perfect
+> time-ordering of rows.
+>
+> **Try It Yourself**: Open Metabase and run:
+> ```sql
+> SELECT attname, n_distinct, correlation
+> FROM pg_stats
+> WHERE tablename = 'Request' AND schemaname = 'public'
+> ORDER BY correlation DESC LIMIT 15;
+> ```
 
 Understanding cost estimation helps you:
 - Write queries that give planner good information

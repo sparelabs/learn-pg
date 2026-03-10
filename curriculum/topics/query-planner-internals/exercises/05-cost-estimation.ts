@@ -303,5 +303,39 @@ export const exercises: Exercise[] = [
     },
     order: 7,
     difficulty: 3
+  },
+  {
+    id: 'interesting-orders',
+    lessonId: '',
+    type: 'sql-query',
+    title: 'Interesting Orders: Merge Join Saves a Sort',
+    prompt: 'Run EXPLAIN on a join query with ORDER BY matching the join key. PostgreSQL may choose Merge Join (even if Hash Join alone is cheaper) because the sorted output eliminates the ORDER BY sort. Then force a Hash Join with enable_mergejoin = off and compare — you should see an extra Sort node.',
+    setupSql: `
+      DROP TABLE IF EXISTS orders CASCADE;
+      DROP TABLE IF EXISTS customers CASCADE;
+      CREATE TABLE customers (id SERIAL PRIMARY KEY, name TEXT);
+      CREATE TABLE orders (id SERIAL PRIMARY KEY, customer_id INTEGER, total NUMERIC);
+      INSERT INTO customers SELECT i, 'Customer ' || i FROM generate_series(1, 1000) i;
+      INSERT INTO orders (customer_id, total) SELECT (random()*999+1)::int, (random()*500)::numeric FROM generate_series(1, 50000) i;
+      CREATE INDEX idx_orders_customer ON orders(customer_id);
+      ANALYZE customers; ANALYZE orders;
+    `,
+    hints: [
+      'EXPLAIN (ANALYZE) SELECT o.* FROM orders o JOIN customers c ON o.customer_id = c.id ORDER BY o.customer_id;',
+      'Then: SET enable_mergejoin = off; EXPLAIN (ANALYZE) SELECT o.* FROM orders o JOIN customers c ON o.customer_id = c.id ORDER BY o.customer_id;',
+      'With merge join disabled, you should see a Hash Join PLUS a separate Sort node'
+    ],
+    explanation: 'Merge Join produces sorted output — an "interesting order" that the planner tracks. When the query has an ORDER BY matching the join key, choosing Merge Join eliminates the need for a separate sort. The total cost (merge join + no sort) can be lower than (hash join + sort), even though hash join alone is cheaper.',
+    validation: {
+      strategy: 'result-match',
+      rules: {
+        strategy: 'result-match',
+        rules: {
+          columns: { required: ['QUERY PLAN'] }
+        }
+      }
+    },
+    order: 8,
+    difficulty: 7
   }
 ];

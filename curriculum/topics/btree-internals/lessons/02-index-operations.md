@@ -101,4 +101,25 @@ REINDEX INDEX CONCURRENTLY my_index_name;
 - Indexes suffer from bloat just like tables; use `pgstatindex()` to measure
 - REINDEX rebuilds a bloated index; CONCURRENTLY avoids blocking writes
 
+> **Real-World Example (Spare)**
+>
+> At Spare, index size vs table size varies dramatically. `LastVehicleLocation`
+> has **1.8 GB of data but 8.5 GB of indexes** — the indexes are 4.6x larger
+> than the table. This happens because the table has many indexes for different
+> query patterns (duty lookup, routability, location). In contrast, `Estimate`
+> (115 GB data, 91 GB indexes) has a more typical ratio. Each index you add
+> has a real storage and write-amplification cost.
+>
+> **Try It Yourself**: Open Metabase and run:
+> ```sql
+> SELECT relname,
+>   pg_size_pretty(pg_relation_size(relid)) AS table_size,
+>   pg_size_pretty(pg_indexes_size(relid)) AS index_size,
+>   ROUND(100.0 * pg_indexes_size(relid) / NULLIF(pg_total_relation_size(relid), 0), 1) AS index_pct
+> FROM pg_stat_user_tables
+> WHERE schemaname = 'public' AND pg_total_relation_size(relid) > 1073741824
+> ORDER BY pg_indexes_size(relid)::float / NULLIF(pg_relation_size(relid), 1) DESC
+> LIMIT 10;
+> ```
+
 Next, we'll explore how the physical ordering of table data relative to an index — clustering — affects query performance dramatically.

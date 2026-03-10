@@ -1,0 +1,8 @@
+{
+  "title": "VACUUM and Autovacuum: Keeping PostgreSQL Healthy",
+  "description": "Master MVCC tuple visibility, autovacuum tuning, XID wraparound prevention, and bloat management",
+  "level": 3,
+  "estimatedWeeks": 1,
+  "prerequisites": ["storage-internals", "transactions"],
+  "order": 13
+}

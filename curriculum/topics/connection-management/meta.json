@@ -1,0 +1,8 @@
+{
+  "title": "Connection Management and PGDog",
+  "description": "Understand PostgreSQL's process model and master connection pooling with PGDog",
+  "level": 3,
+  "estimatedWeeks": 1,
+  "prerequisites": ["basics", "transactions"],
+  "order": 14
+}

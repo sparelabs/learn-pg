@@ -316,6 +316,55 @@ For large sequential scans, PostgreSQL uses a small "buffer ring" instead of fil
 VACUUM ANALYZE large_table;
 ```
 
+## Why Clock-Sweep Instead of LRU?
+
+Traditional LRU (Least Recently Used) seems ideal for caching, but it has a fatal flaw for database workloads: **sequential flooding**.
+
+### The Sequential Flooding Problem
+
+Imagine your buffer pool holds 1,000 pages and you run a sequential scan over a table with 10,000 pages. Under pure LRU:
+
+1. Each new page goes to the "most recently used" position
+2. Each page evicts the "least recently used" page
+3. After scanning 1,000 pages, your entire buffer pool contains ONLY pages from this one scan
+4. All your frequently-accessed index pages, hot table pages — everything is evicted
+5. The scanned pages themselves will never be accessed again (single-pass scan)
+
+This is catastrophic: one large sequential scan destroys the cache for everyone.
+
+### How Clock-Sweep Solves This
+
+Clock-sweep is a practical approximation of LRU that avoids this problem:
+
+1. Pages are arranged in a circular buffer
+2. Each page has a "usage count" (0-5)
+3. When a page is accessed, its usage count increments (up to 5)
+4. When a free page is needed, the "clock hand" sweeps:
+   - If usage count > 0: decrement it, skip this page
+   - If usage count = 0: evict this page
+
+Frequently accessed pages accumulate high usage counts and survive many sweeps. Sequentially-scanned pages (accessed once) have usage count 1 — they're evicted quickly.
+
+### Buffer Rings: The Anti-Flooding Mechanism
+
+For large sequential scans, PostgreSQL goes even further with **buffer rings**:
+
+- A large seq scan gets a private ring buffer of only 256KB (~32 pages)
+- The scan reuses these 32 pages in a ring, never polluting the main buffer pool
+- This means a 10GB sequential scan only ever uses 256KB of shared_buffers
+
+This is why you can safely run analytics queries on large tables without destroying the cache for your OLTP workload.
+
+### Observing Buffer Rings in Practice
+
+When you run `EXPLAIN (ANALYZE, BUFFERS)` on a large sequential scan, you'll see `shared hit` and `shared read` counts. If the table is larger than shared_buffers, most reads will be `shared read` (from disk) because the buffer ring prevents caching:
+
+```sql
+EXPLAIN (ANALYZE, BUFFERS) SELECT count(*) FROM huge_table;
+-- Buffers: shared hit=32 read=12456
+-- The low hit count (32) is the ring buffer size
+```
+
 ## Caching and Physical I/O Patterns
 
 ### Read-Ahead and Prefetching
@@ -401,6 +450,27 @@ Can be scripted in startup scripts for critical tables.
 - Monitor **pg_stat_database** and **pg_statio_user_tables** for cache metrics
 - Large scans use buffer rings to avoid cache pollution
 - Cache warming after restart can improve initial performance
+
+> **Real-World Example (Spare)**
+>
+> Spare's production database achieves a **99.94% overall cache hit ratio**, but
+> individual tables tell very different stories. The `Slot` table (39 GB) has a
+> **99.94%** heap cache hit rate — its hot working set fits in shared buffers
+> despite the large total size. But the `Estimate` table (115 GB) only reaches
+> **89.64%** — it's too large for the buffer pool, and sequential scans cause
+> cache misses. The `DutyPrecomputedMetrics` table sits at **80.28%** (analytics
+> workload), and `Device` is at just **53.22%** (rarely accessed, barely cached).
+>
+> This shows why per-table cache hit ratios matter more than the overall number.
+>
+> **Try It Yourself**: Open Metabase and run:
+> ```sql
+> SELECT relname, heap_blks_read, heap_blks_hit,
+>   ROUND(100.0 * heap_blks_hit / NULLIF(heap_blks_hit + heap_blks_read, 0), 2) AS cache_hit_pct
+> FROM pg_statio_user_tables
+> WHERE schemaname = 'public'
+> ORDER BY heap_blks_read DESC LIMIT 10;
+> ```
 
 Understanding caching is essential for:
 - Sizing server memory appropriately

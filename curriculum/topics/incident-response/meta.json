@@ -1,0 +1,15 @@
+{
+  "title": "Incident Response: Tying It All Together",
+  "description": "Diagnose and fix simulated production incidents using skills from all previous topics",
+  "level": 4,
+  "estimatedWeeks": 1,
+  "prerequisites": [
+    "storage-internals",
+    "btree-internals",
+    "transactions",
+    "operational-health",
+    "query-planner-internals",
+    "postgresql-statistics"
+  ],
+  "order": 15
+}

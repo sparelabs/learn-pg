@@ -150,4 +150,31 @@ Before creating an index, ask:
 - B-tree is the right choice for most cases; GIN for JSONB/arrays, BRIN for time-series, Hash for equality-only
 - Always consider the write overhead and space cost before adding an index
 
+> **Real-World Example (Spare)**
+>
+> Spare's production database demonstrates all of these patterns:
+>
+> **Partial indexes** (17 in production): `Slot_requestId_type_unique_partial_idx`
+> enforces uniqueness only `WHERE "requestId" IS NOT NULL` — with 947M index scans,
+> it's one of the most-used indexes. `OrganizationRider_findByEmail_idx` combines
+> a partial index (`WHERE "deletedAt" IS NULL`) with an expression (`lower(email)`)
+> and multi-column ordering — soft-delete pattern meets case-insensitive lookup.
+>
+> **GIN trigram indexes**: `OrganizationRider` has **5 GIN indexes** using
+> `gin_trgm_ops` for fuzzy search on email, phone number, first/last name,
+> and external ID. These power the rider search UI where operators type partial
+> names or emails.
+>
+> **Try It Yourself**: Open Metabase and run:
+> ```sql
+> -- Partial indexes
+> SELECT indexname, indexdef FROM pg_indexes
+> WHERE schemaname = 'public' AND indexdef LIKE '%WHERE%'
+> ORDER BY indexname;
+>
+> -- GIN trigram indexes
+> SELECT indexname, indexdef FROM pg_indexes
+> WHERE schemaname = 'public' AND indexdef LIKE '%gin%';
+> ```
+
 This completes our deep dive into B+ tree internals and index patterns. You now understand how indexes are structured, how they affect write performance, how clustering impacts reads, and how to design indexes that match your query patterns.

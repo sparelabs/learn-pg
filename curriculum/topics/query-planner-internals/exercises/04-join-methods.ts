@@ -243,5 +243,122 @@ export const exercises: Exercise[] = [
     },
     order: 5,
     difficulty: 3
+  },
+  {
+    id: 'hash-join-batches-low-mem',
+    lessonId: '',
+    type: 'sql-query',
+    title: 'Hash Join: Spilling to Disk',
+    prompt: 'Set work_mem to 64kB and run the join query. Look for "Batches" in the Hash node — it should be greater than 1, meaning the hash table didn\'t fit in memory.',
+    setupSql: `
+      DROP TABLE IF EXISTS orders CASCADE;
+      DROP TABLE IF EXISTS customers CASCADE;
+      CREATE TABLE customers (id SERIAL PRIMARY KEY, name TEXT, city TEXT);
+      CREATE TABLE orders (id SERIAL PRIMARY KEY, customer_id INTEGER, total NUMERIC, created_at DATE);
+      INSERT INTO customers (name, city)
+      SELECT 'Customer ' || i, CASE (i % 5) WHEN 0 THEN 'Boston' WHEN 1 THEN 'NYC' WHEN 2 THEN 'LA' WHEN 3 THEN 'Chicago' ELSE 'Seattle' END
+      FROM generate_series(1, 5000) i;
+      INSERT INTO orders (customer_id, total, created_at)
+      SELECT (random() * 4999 + 1)::integer, (random() * 1000)::numeric, '2024-01-01'::date + (random() * 365)::integer
+      FROM generate_series(1, 100000) i;
+      ANALYZE customers;
+      ANALYZE orders;
+    `,
+    hints: [
+      'Start your query with: SET work_mem = \'64kB\';',
+      'Then: EXPLAIN (ANALYZE) SELECT c.name, o.total FROM customers c JOIN orders o ON c.id = o.customer_id;',
+      'Look for "Batches:" in the Hash node of the output'
+    ],
+    explanation: 'When work_mem is too small to hold the hash table, PostgreSQL splits the join into multiple batches (Grace Hash Join). Each batch is processed independently, requiring multiple passes over the data. Increasing work_mem reduces batches to 1, keeping everything in memory.',
+    validation: {
+      strategy: 'result-match',
+      rules: {
+        strategy: 'result-match',
+        rules: {
+          columns: {
+            required: ['QUERY PLAN']
+          }
+        }
+      }
+    },
+    order: 6,
+    difficulty: 5
+  },
+  {
+    id: 'hash-join-batches-high-mem',
+    lessonId: '',
+    type: 'sql-query',
+    title: 'Hash Join: In-Memory with Large work_mem',
+    prompt: 'Now set work_mem to 256MB and run the same join query. The hash join should complete in a single batch.',
+    setupSql: `
+      DROP TABLE IF EXISTS orders CASCADE;
+      DROP TABLE IF EXISTS customers CASCADE;
+      CREATE TABLE customers (id SERIAL PRIMARY KEY, name TEXT, city TEXT);
+      CREATE TABLE orders (id SERIAL PRIMARY KEY, customer_id INTEGER, total NUMERIC);
+      INSERT INTO customers (name, city)
+      SELECT 'Customer ' || i, 'City ' || (i % 10)
+      FROM generate_series(1, 5000) i;
+      INSERT INTO orders (customer_id, total)
+      SELECT (random() * 4999 + 1)::integer, (random() * 1000)::numeric
+      FROM generate_series(1, 100000) i;
+      ANALYZE customers;
+      ANALYZE orders;
+    `,
+    hints: [
+      'SET work_mem = \'256MB\'; EXPLAIN (ANALYZE) SELECT c.name, o.total FROM customers c JOIN orders o ON c.id = o.customer_id;',
+      'Compare the "Batches" count to the previous exercise'
+    ],
+    explanation: 'With enough work_mem, the entire hash table fits in memory (Batches: 1). This avoids the overhead of partitioning and multiple passes, making the join significantly faster.',
+    validation: {
+      strategy: 'result-match',
+      rules: {
+        strategy: 'result-match',
+        rules: {
+          columns: {
+            required: ['QUERY PLAN']
+          }
+        }
+      }
+    },
+    order: 7,
+    difficulty: 5
+  },
+  {
+    id: 'planner-algorithm-choice',
+    lessonId: '',
+    type: 'sql-query',
+    title: 'How Table Size Affects Join Algorithm Choice',
+    prompt: 'Run EXPLAIN on the join between a small lookup table (10 rows) and the large orders table. PostgreSQL should choose Nested Loop with Index Scan, not Hash Join. Why?',
+    setupSql: `
+      DROP TABLE IF EXISTS orders CASCADE;
+      DROP TABLE IF EXISTS statuses CASCADE;
+      CREATE TABLE statuses (id SERIAL PRIMARY KEY, name TEXT);
+      INSERT INTO statuses (name) VALUES ('pending'), ('processing'), ('shipped'), ('delivered'), ('cancelled'), ('returned'), ('refunded'), ('on_hold'), ('backordered'), ('completed');
+      CREATE TABLE orders (id SERIAL PRIMARY KEY, status_id INTEGER REFERENCES statuses(id), total NUMERIC);
+      INSERT INTO orders (status_id, total)
+      SELECT (random() * 9 + 1)::integer, (random() * 500)::numeric
+      FROM generate_series(1, 100000) i;
+      CREATE INDEX idx_orders_status ON orders(status_id);
+      ANALYZE statuses;
+      ANALYZE orders;
+    `,
+    hints: [
+      'EXPLAIN (ANALYZE) SELECT s.name, o.total FROM statuses s JOIN orders o ON s.id = o.status_id WHERE s.name = \'pending\';',
+      'With only 1 matching row in statuses, Nested Loop + Index Scan on orders is much cheaper than hashing 100K rows'
+    ],
+    explanation: 'When one table is very small (especially after filtering), PostgreSQL prefers Nested Loop with an index lookup on the larger table. For each row in the small table, it does one index scan — much cheaper than building a hash table of the entire larger table.',
+    validation: {
+      strategy: 'result-match',
+      rules: {
+        strategy: 'result-match',
+        rules: {
+          columns: {
+            required: ['QUERY PLAN']
+          }
+        }
+      }
+    },
+    order: 8,
+    difficulty: 6
   }
 ];

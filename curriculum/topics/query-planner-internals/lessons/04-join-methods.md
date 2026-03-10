@@ -536,6 +536,70 @@ Merge Join  (cost=...)
 4. **Always**: Keep statistics fresh with ANALYZE
 5. **Monitor**: Watch for multiple batches, external sorts, high loop counts
 
+## I/O Cost Analysis: A Worked Example
+
+Let's work through the actual I/O costs for each join algorithm with realistic numbers.
+
+**Setup**: Orders has 10,000 pages, Customers has 500 pages, work_mem gives us 100 buffer pages.
+
+### Simple Nested Loop Join
+- For each row in outer table, scan entire inner table
+- Cost: |outer| × pages(inner) = very expensive
+- PostgreSQL rarely uses this; prefers index nested loop
+
+### Block Nested Loop Join (what PostgreSQL actually does)
+- Read outer table in chunks of (B-2) pages, where B is available buffer pages
+- For each chunk, scan inner table once
+- Cost: pages(outer) + ⌈pages(outer)/(B-2)⌉ × pages(inner)
+- With our numbers: 10,000 + ⌈10,000/98⌉ × 500 = 10,000 + 103 × 500 = **61,500 I/Os**
+
+### Hash Join I/O Cost
+- Build phase: read inner table, build hash table
+- Probe phase: read outer table, probe hash table
+- If hash table fits in memory: 3 × (pages(outer) + pages(inner))
+- With our numbers: 3 × (10,000 + 500) = **31,500 I/Os**
+
+### When Hash Join Spills to Disk
+When `work_mem` is too small to hold the hash table:
+- PostgreSQL partitions both tables into batches
+- Each batch processed independently
+- "Batches: 4" in EXPLAIN means 4 passes needed
+- This is the **Grace Hash Join** from database theory
+
+### work_mem = Buffer Pages
+The `work_mem` setting directly corresponds to the "B buffer pages" in these formulas:
+- `work_mem = '4MB'` ≈ 512 pages (4MB / 8KB per page)
+- `work_mem = '64kB'` ≈ 8 pages — hash join will need many batches
+
+## Merge Join and Interesting Orders
+
+Sometimes the planner chooses Merge Join even when Hash Join appears cheaper for just the join step. This happens because of **interesting orders**.
+
+If the query has an ORDER BY that matches the join key, Merge Join's sorted output eliminates the need for a separate sort:
+
+- **Hash Join** cost: 100 + **Sort cost: 50** = 150 total
+- **Merge Join** cost: 120 (but output already sorted!) + **Sort cost: 0** = 120 total
+
+PostgreSQL tracks these "interesting orders" during plan search and may keep a more expensive partial plan if its sort order eliminates a later sort operation.
+
+> **Real-World Example (Spare)**
+>
+> At Spare, the `FleetAccessRule` table is the ultimate lookup join example.
+> Its `FleetAccessRule_dataId_idx` index has been scanned **17.5 billion times** —
+> it's joined on nearly every query for access control. Despite this astronomical
+> usage, the index is only **2 KB** because the table is tiny. This makes it a
+> perfect Nested Loop + Index Scan target: for each request/duty/slot being fetched,
+> PostgreSQL does a single index lookup into this tiny table.
+>
+> **Try It Yourself**: Open Metabase and run:
+> ```sql
+> SELECT indexrelname, idx_scan,
+>   pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
+> FROM pg_stat_user_indexes
+> WHERE relname = 'FleetAccessRule'
+> ORDER BY idx_scan DESC LIMIT 5;
+> ```
+
 ## Key Takeaways
 
 - **Nested Loop**: Best for small outer table with index on inner

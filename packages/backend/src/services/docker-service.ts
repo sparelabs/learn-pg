@@ -121,7 +121,7 @@ export class DockerService {
     try {
       await client.connect();
       await client.query(`SET statement_timeout = ${timeoutMs}`);
-      await client.query(`SET search_path TO ${schema}`);
+      await client.query(`SET search_path TO ${schema}, public`);
       const result = await client.query(query, params);
       return this.extractResult(result);
     } finally {
@@ -146,7 +146,7 @@ export class DockerService {
     try {
       await client.connect();
       await client.query(`SET statement_timeout = ${timeoutMs}`);
-      await client.query(`SET search_path TO ${schema}`);
+      await client.query(`SET search_path TO ${schema}, public`);
       const result = await client.query(query, params);
       return this.extractResult(result);
     } finally {
@@ -213,7 +213,7 @@ export class DockerService {
       await this.resetSchema(schema, useSuperuser);
 
       // Set search path
-      await client.query(`SET search_path TO ${schema}`);
+      await client.query(`SET search_path TO ${schema}, public`);
 
       // Execute setup SQL
       await client.query(setupSql);

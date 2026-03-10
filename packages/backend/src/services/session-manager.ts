@@ -30,8 +30,8 @@ export class SessionManager {
     const sessionB = new Client(config);
     await sessionA.connect();
     await sessionB.connect();
-    await sessionA.query(`SET search_path TO ${schema}`);
-    await sessionB.query(`SET search_path TO ${schema}`);
+    await sessionA.query(`SET search_path TO ${schema}, public`);
+    await sessionB.query(`SET search_path TO ${schema}, public`);
     const sessionId = crypto.randomUUID();
     this.sessions.set(sessionId, { sessionA, sessionB, schema, exerciseId, createdAt: new Date() });
     return sessionId;

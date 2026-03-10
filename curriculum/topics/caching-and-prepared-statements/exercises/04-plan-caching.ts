@@ -143,6 +143,7 @@ const exercises: Exercise[] = [
     type: 'sql-query',
     title: 'Identify High-Planning Overhead Queries',
     prompt: 'Query pg_stat_statements to find queries where planning time is significant. Show the query, calls, mean_plan_time, mean_exec_time, and calculate plan_to_exec_ratio (mean_plan_time / mean_exec_time). Filter for queries called more than 100 times. Order by total planning time (mean_plan_time * calls) descending, limit to 5.',
+    requiresSuperuser: true,
     setupSql: `
       CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
       -- Simulate some queries
